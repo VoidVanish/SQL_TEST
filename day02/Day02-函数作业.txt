@@ -1,0 +1,74 @@
+【基础题】
+一、字符函数
+从"software"找到'f'的位置
+select instr('software','f',1,1) from dual;
+
+查询从"software"中去除'a'的结果
+select rtrim(substr('software',1,6),'a') from dual; 
+--select substr('software',1,6) from dual; 
+
+从'HelloWorld'中截取从第2个字符开始的5个字符
+select substr(ltrim('HelloWorld','H'),1,5) from dual;
+
+查找'World'在'HelloWorld'中的位置
+select instr('HelloWorld','World',-1,1) from dual;
+
+将'HelloWorld'中的'World'替换成'BigData'
+select replace('HelloWorld','World','BigData') from dual;
+
+查询员工姓名以'S'结尾的员工信息，不允许使用like，写出2-3种查询方法(有点难度)
+
+
+
+【综合练习】 知识点 + 业务
+(1)查询30部门的雇员，显示员工全名（要求: 首字母大写，其余小写） 
+select concat(substr(ename,1,1), substr(lower(ename),2))
+from emp
+where deptno = 30;
+
+(2)已知一个手机号（例如: 18620015858），转成为 XXX-XXXX-XXXX 格式显示
+例如:
+---------------------------
+18620015858  186-2001-5858
+---------------------------
+select concat(concat(concat(concat(substr(18620015858,1,3),'-'),substr(18620015858,4,4)),'-'),substr(18620015858,8)) 
+from dual;
+
+
+(3)已知一个任意邮箱（例如: ikun@qq.com, ikun@163.com）请提取邮箱域名部分（@后面的部分）
+---------------------------
+邮箱			域名
+ikun@qq.com     qq.com
+ikun@163.com	163.com
+---------------------------
+select substr('ikun@qq.com',instr('ikun@qq.com','@',1)) from dual;
+select substr('ikun@163.com',instr('ikun@163.com','@',1)) from dual;
+
+
+(4) 需求：从完整文件路径中提取目录路径（不包含文件名）
+例如:
+文件路径: '/home/user/documents/reports/q4_financial_report_2023.pdf'
+目录路径: '/home/user/documents/reports/'
+
+select substr('/home/user/documents/reports/q4_financial_report_2023.pdf',1,
+instr('/home/user/documents/reports/q4_financial_report_2023.pdf','/',1,5)
+) from dual;
+
+-- 不要这样做:
+replace('/home/user/documents/reports/q4_financial_report_2023.pdf', 'q4_financial_report_2023.pdf', '')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
