@@ -1,7 +1,64 @@
+
 请使用in和exists 2种方法完成
 --小练习: 查询SMITH上班地点
+1 查询sm部门 用in
+select deptno from emp where ename = 'SMITH';
+2 在dept表判断部门号 输出地点
+
+select loc from dept where deptno in(select deptno from emp where ename = 'SMITH');
+
+用exists
+select t.loc
+from dept t
+where exists (select 1 from emp e where ename = 'SMITH' and e.deptno = t.deptno);
+
+
 --小练习2: 查询在NEW YORK上班的员工名字
+用in
+1 select deptno from dept where loc = 'NEW YORK';
+
+select ename from emp e
+where deptno in(select deptno from dept where loc = 'NEW YORK');
+
+用exists
+1 select ename from emp e
+where exists(select d.deptno from dept d where d.loc = 'NEW YORK' and d.deptno = e.deptno);
+
+
 --小练习3: 查询和10号部门中，岗位相同的其他员工的信息
+1 select job from emp where deptno = 10;
+上面是一行多列
+用in
+select * from emp e
+where e.job in(select job from emp where deptno = 10);
+
+用exists
+select * from emp e
+where exists(select job from emp where job = e.job and deptno = 10);
+
 --小练习4: 查询和SMITH是相同岗位的   但是部门是ACCOUNTING的员工信息
+用in
+
+select job from emp where ename = 'SMITH';
+ 1找出跟job一样的其余数据
+select deptno from emp e where e.job = (select job from emp where ename = 'SMITH');
+ 2找出acc的部门号
+select deptno from dept where dname = 'ACCOUNTING';
+ 3跟临时表2 in 求交集
+select *
+from (select deptno from dept where dname = 'ACCOUNTING') dp
+where dp.deptno in (select deptno from emp e where e.job = (select job from emp where ename = 'SMITH'));
+ 4用临时表3与雇员相求
+select * from emp e
+where e.deptno = (select *
+from (select deptno from emp e where e.job = (select job from emp where ename = 'SMITH')) dp
+where dp.deptno in (select deptno from dept where dname = 'ACCOUNTING'));
+
+用exists
+select *
+from emp e where exists(select 1 from(select deptno from dept where dname = 'ACCOUNTING') t where e.deptno = t.deptno) and
+e.job = (select job from emp where ename = 'SMITH');
 
 面试题: in和exists区别？
+in是以单列多行结果集对单个结果进行判断查询
+exists是以单个结果与其他表进行判断查询
