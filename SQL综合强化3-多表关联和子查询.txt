@@ -1,20 +1,191 @@
 ﻿一、多表关联
 --查询员工编号，员工姓名，领导编号，领导姓名。 例如：7369  SMITH  7902  FORD
---查询入职日期早于其直接上级领导的所有员工信息
---查询所有部门及其员工信息，包括那些没有员工的部门
---查询所有工种为CLERK的员工的姓名及其部门名称
---查询各个部门的编号,名称 以及部门人数、部门平均工资
---查询最低工资低于2000的部门名称
---查询所有员工工资都在900~3000之间的部门的信息
+select e.empno 员工编号, e.ename 员工姓名, m.empno 领导编号, m.ename 领导姓名 
+from emp e join emp m on e.mgr = m.empno
+where e.ename = 'SMITH' or e.ename = 'FORD' ;
 
+
+--查询入职日期早于其直接上级领导的所有员工信息
+select e.empno,
+       e.ename,
+       e.job,
+       e.mgr,
+       e.hiredate,
+       e.sal,
+       e.comm,
+       e.deptno
+from emp e join emp m on e.mgr = m.empno
+where e.hiredate < m.hiredate;
+
+--查询所有部门及其员工信息，包括那些没有员工的部门
+select *
+from dept d left join emp e on d.deptno = e.deptno;
+
+--查询所有工种为CLERK的员工的姓名及其部门名称
+1 查询所有工种为clerk的员工
+select ename, deptno
+from emp
+where job = 'CLERK'
+2 链接dept表
+select c.ename, d.deptno, d.dname
+from dept d join (select ename, deptno
+     from emp
+     where job = 'CLERK') c on d.deptno = c.deptno
+
+--查询各个部门的编号,名称 以及部门人数、部门平均工资
+1 查询每个部门的人数和每个部门的平均工资
+select deptno, count(deptno) 人数, avg(sal) 平均工资
+from emp 
+group by deptno
+2 与部门关联
+select d.deptno, d.dname, t.人数, t.平均工资
+from dept d join (select deptno, count(deptno) 人数, avg(sal) 平均工资
+     from emp 
+     group by deptno) t on d.deptno = t.deptno;
+
+--查询最低工资低于2000的部门名称
+1 查询最低工资的部门
+select deptno, min(sal) 最低工资
+from emp
+group by deptno;
+2 与部门表关联 并判断最低工资低于两千的部门有几个
+select t.deptno, d.dname
+from dept d join (select deptno, min(sal) minsal
+          from emp
+          group by deptno) t on d.deptno = t.deptno
+where t.minsal < 2000;
+
+--查询所有员工工资都在900~3000之间的部门的信息
+1
+select ename, deptno, sal
+from emp
+where sal between 900 and 3000;
+2
+select d.dname
+from dept d join (select ename, deptno, sal
+     from emp
+where sal between 900 and 3000) t on t.deptno = d.deptno;
                    
 二、子查询（写步骤）
 --查询工资比SMITH员工工资高的所有员工信息
+1 获取sim工资  
+select sal from emp where ename = 'SMITH';
+2 将sal工资与其余员工比对
+select *
+from emp e
+where e.sal > (select sal from emp where ename = 'SMITH');
+
 --查询工资比SCOTT或者SMITH高的员工信息
+1 查询scott与smi的工资
+select sal
+from emp
+where ename = 'SMITH';
+
+select sal
+from emp
+where ename = 'SCOTT';
+
+2 将单列多行的数据与其他员工比较
+select *
+from emp e
+where e.sal > (select sal
+      from emp
+      where ename = 'SMITH') or
+      e.sal > (select sal
+      from emp
+      where ename = 'SCOTT') 
+and
+      ename != 'SCOTT' and ename != 'SMITH';
+
 --查询与SMITH员工从事相同工作的所有员工信息 
+1 查询sim的工作
+select job
+from emp
+where ename = 'SMITH';
+2 把1作为条件与其他雇员进行比较
+select *
+from emp e
+where e.job = (select job
+      from emp
+      where ename = 'SMITH')
+
 --查询所有员工的姓名及其 直接上级的姓名(子查询)
+1 获取所有员工的姓名和mgr
+select ename, mgr
+from emp;
+2 将1作为表放入from与emp m表连
+select t.ename, m.ename
+from (select ename, mgr
+     from emp) t join emp m on t.mgr = m.empno;
+
 --查询工资高于公司平均工资的所有员工信息
+1 查平均工资
+select avg(sal)
+from emp ;
+2 比较
+select *
+from emp e
+where e.sal > (select avg(sal)
+      from emp );
+
 --列出工资等于 30号部门中某个员工工资 的所有员工的姓名和工资。
+1 所有不是30部门的员工的工资
+select ename, sal
+from emp 
+where deptno != 30
+
+e.sal = t.sal
+
+2 拿不是
+select sal
+from emp e
+where deptno = 30  当做list
+
+
+select t.ename, t.sal
+from (select ename, sal
+     from emp 
+     where deptno != 30
+) t
+where t.sal in((select sal
+      from emp e
+      where deptno = 30 ));
+
+
 --查询工资高于 30号部门中工作的所有员工的工资 的员工姓名和工资
+1 30部门最高工资
+select max(sal)
+from emp
+where deptno = 30 --值
+2 对比
+select ename, sal
+from emp
+where sal > (select max(sal)
+      from emp
+      where deptno = 30)
+
+
 --查询所有员工工资都大于1000的部门的信息
+1 过滤工资
+select deptno
+from emp
+where sal > 1000
+2 链接部门
+select d.deptno, d.dname, d.loc
+from dept d
+where d.deptno in (select deptno
+      from emp
+      where sal > 1000)
+
 --查询所有员工工资都大于1000的部门的信息及其员工信息
+1 查询大于1000的员工信息
+select *
+from emp
+where sal > 1000
+2 放进from当表
+select *
+from (
+     select *
+     from emp
+     where sal > 1000
+) t join dept d on t.deptno = d.deptno;
