@@ -2,11 +2,26 @@
 
 字符函数
 --在emp表中查询出姓名的第二个字母为A的记录。
---显示员工姓名正好为5个字符的员工。
---显示所有员工姓名的前三个字符。
---显示所有员工的姓名，用 a 替换A。
---在'广东省-广州市-番禺区' 中截取出市区
+select *
+from emp
+where instr(ename, 'A', 1, 1) = 2;
 
+--显示员工姓名正好为5个字符的员工。
+select *
+from emp
+where length(ename) = 5;
+
+--显示所有员工姓名的前三个字符。
+select substr(ename, 1, 3)
+from emp;
+
+--显示所有员工的姓名，用 a 替换A。
+select replace(ename, 'A', 'a')
+from emp;
+
+--在'广东省-广州市-番禺区' 中截取出市区
+select substr('广东省-广州市-番禺区', 5)
+from dual;
 
 数字函数
 --显示所有员工的日薪金，忽略余数。每个月的天数都以30天计。
@@ -16,12 +31,60 @@ from emp;
 
 时间函数
 --查询1981年入职的员工
+select *
+from emp
+where to_char(hiredate, 'YYYY') = '1981';
 
 
 聚合函数
 --查出30部门全年工资 与 奖金总和。
+select sum(sal*12) 年工资, sum(comm) 年奖金
+from emp
+where deptno = 30
+
+
 --查出每个部门每个职位的员工数量。
---查出年薪大于5000且奖金大于1000的员工信息。
+select deptno, count(deptno)
+from emp
+group by (deptno);
+
+--查出年薪大于50000且奖金大于1000的员工信息。
+select *
+from emp
+where sal > 5000/12 and comm >1000;
+
 --查出各部门各职位员工数量与部门职位年薪。
+1 统计所有工作和部门
+select job, deptno, sal
+from emp
+
+2
+select t2.job,count(t2.job) 职位员工数量, t2.deptno, sum(sal*12) 部门职位年薪
+from (select job, deptno, sal
+     from emp) t2
+group by t2.job, t2.deptno --上面是按步骤 临时表1是先把emp里面的东西拿出来 步骤2再把临时表1收进来
+                           --临时表3是直接把emp当临时表用从中组合job和部门 两者方法是一致的 
+                           --只是步骤1多次一举生成一张临时表了
+3
+select job,count(job) 职位员工数量, deptno, sum(sal*12) 部门职位年薪
+from emp
+group by job, deptno;
+
 --查出20部门CLERK和MANAGER职位的员工数量。
+select job, count(job) 数量
+from emp
+where deptno = 20 and job in('CLERK', 'MANAGER')
+group by job;
+
 --查出员工人数大于3个的部门的部门编号及对应的员工数量
+1 查询各个部门的人数和部门号
+select deptno, count(deptno) Countdep
+from emp
+group by deptno;
+
+2 过滤小于三个的
+select *
+from (select deptno, count(deptno) Countdep
+     from emp
+     group by deptno) t
+where t.Countdep > 3

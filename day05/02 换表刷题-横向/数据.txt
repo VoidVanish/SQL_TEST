@@ -1,0 +1,86 @@
+
+/*
+
+ *学生表：student(学号,学生姓名,出生年月,性别)
+ sid,   学号 
+ sname,  学生姓名
+ sbirth,  出生年月
+ sgender 性别
+
+  成绩表：score ( 学号, 课程号, 成绩)
+  sid  学号,
+  scoure 课程号,
+  sscore 成绩 
+
+  课程表：course(课程号,课程名称,教师号)
+
+  教师表：teacher(教师号,教师姓名)
+ */
+
+-- 一、创建数据库和表
+
+-- 1、学生表
+drop table student ;
+
+CREATE table student (
+ sid number,--学号
+ sname varchar2(20),--姓名
+ sbirth varchar2(20), --出生日期
+ sgender varchar2(20)--性别
+);
+INSERT into student values (0001,'猴子','1989-01-01','男');
+INSERT into student values(0002,'猴子','1990-12-21','女');
+INSERT into student values(0003,'马云','1991-12-21','男');
+INSERT into student values(0004,'王思聪','1990-05-20','男');
+commit;
+SELECT * from student ;
+
+-- 2.创建学生成绩表
+drop table score ;
+create table score (
+  sid number ,--学号
+  scoure number,--课程号
+  sscore number, --成绩
+  primary key (sid,scoure) 
+);
+
+INSERT  into score values (0001,0001,80);
+INSERT  into score values (0001,0002,90);
+INSERT  into score values (0001,0003,99);
+INSERT  into score values (0002,0002,60);
+INSERT  into score values (0002,0003,80);
+INSERT  into score values (0003,0001,80);
+INSERT  into score values (0003,0002,80);
+INSERT  into score values (0003,0003,80);
+commit ;
+SELECT * from score ;
+
+
+-- 创建课程表 
+drop table course ;
+create table course (
+  scoure number ,--课程号
+  cname varchar2(20),--课程名称
+  cteacher number 
+);
+INSERT  into course values (0001,'语文',0002);
+INSERT  into course values (0002,'数学',0001);
+INSERT  into course values (0003,'英语',0003);
+commit;
+SELECT * from course ;
+
+--创建教师表 
+drop table teacher;
+create table  teacher(
+ cteacher int,--教师号
+ tname varchar (20)
+);
+
+INSERT into teacher values (0001,'孟扎扎');
+INSERT into teacher values (0002,'马化腾');
+INSERT into teacher values (0003,null);
+INSERT into teacher values (0004,'');
+commit ;
+SELECT * from teacher ;
+
+
