@@ -1,0 +1,229 @@
+/*
+【需求说明】：
+A表B表C表为多对多关系
+A表、B表关联条件：pav 和 brn同时满足
+B表、C表关联条件：ip_word
+
+A表统计维度：A.pav、A.brn
+C表统计维度：C.ip_word
+
+
+【求解问题】
+
+求指标 sum(A.a_num)、sum(A.b_num)、sum(C.c_num)
+
+【参考结果】
+
+ A_pav   A_brn  a_nums b_nums  B_mind B_ip_word  c_nums
+热水器   美的     30     11       aaa     张三     8        
+热水器   美的     30     11       aab     张三     8  
+热水器   美的     30     11       bbb     李四     19  
+饮水机   西门子   60     9        bbb     王五     9   
+油烟机   松下     80     2        bbb     赵六     8 
+冰箱     美的     14     3                       
+*/
+
+SELECT *
+  FROM (SELECT A.PAV, A.BRN, SUM(A.A_NUM) A_NUMS, SUM(A.B_NUM) B_NUMS
+          FROM A   
+         GROUP BY A.PAV, A.BRN) AA
+  LEFT JOIN B
+    ON AA.PAV = B.PAV
+   AND AA.BRN = B.BRN
+  LEFT JOIN (SELECT C.IP_WORD, SUM(C.C_NUM) C_NUMS FROM C GROUP BY C.IP_WORD) CC
+    ON CC.IP_WORD = B.IP_WORD;
+
+
+【需求说明】：
+存在下面SQL语句
+SELECT a.ymd,a.symbol,a.price_close,b.symbol,b.price_close
+FROM
+    (SELECT ymd,symbol,price_close FROM stocks
+     WHERE symbol='APPL') a
+LEFT OUTER JOIN
+    (SELECT ymd,symbol,price_close FROM
+     stocks WHERE symbol='IBM') b
+ON a.ymd=b.ymd;
+
+--请写一个不带子查询的SQL，结果与上面语句查询结果一致
+SELECT  A.YMD,A.SYMBOL,A.PRICE_CLOSE,B.SYMBOL,B.PRICE_CLOSE
+  FROM STOCKS A
+  LEFT JOIN STOCKS B
+    ON A.YMD = B.YMD
+   AND B.SYMBOL = 'IBM'
+ WHERE A.SYMBOL = 'APPL';
+
+
+
+-- 请总结JOIN中，ON与WHERE的区别
+--在内连接中没有区别                 30  6个     1234 4条
+SELECT * FROM DEPT D JOIN EMP E ON E.DEPTNO = D.DEPTNO
+WHERE E.DEPTNO = 30;
+
+--在外连接中 
+--ON不会过滤主表数据  主 D 1234 四条  从 E 10三条 20 五条 30六条 
+
+SELECT * FROM DEPT D LEFT JOIN EMP E ON E.DEPTNO = D.DEPTNO
+AND E.DEPTNO = 30;
+
+--WHERE会过滤主表数据
+SELECT * FROM DEPT D LEFT JOIN EMP E ON E.DEPTNO = D.DEPTNO
+WHERE E.DEPTNO = 30;
+
+
+
+/**
+【需求】期望求出平台统计结果，如下表所示(假设当天是2020-07-05)
+
+累计订单次数	累计下单总额	累计订单人数	最近3天累计下单次数	最近3天累计订单总额
+      12	         2300	        3	                 6	                 1800
+ */     
+
+重要逻辑：传入某个数据思想  在查询或者使用聚合函数当中可以多用传入数据这个思想从而减少代码运算量 在聚合函数里进行子查询从而作为新字段输出在表里
+
+SELECT * FROM t;
+
+SELECT SUM(T.ORDER_COUNT) 累计订单次数,
+       SUM(T.ORDER_M) 累计下单总额,
+       COUNT(DISTINCT CASE
+               WHEN T.DT BETWEEN DATE '2020-07-05' - 2 AND DATE '2020-07-05' THEN
+                T.U_ID
+             END) 最近三天累计订单人数,
+       SUM(CASE
+             WHEN T.DT BETWEEN DATE '2020-07-05' - 2 AND DATE '2020-07-05' THEN
+              T.ORDER_COUNT
+           END) 最近3天累计下单次数,
+       SUM(CASE
+             WHEN T.DT BETWEEN DATE '2020-07-05' - 2 AND DATE '2020-07-05' THEN
+              T.ORDER_M
+           END) 最近3天累计订单总额
+  FROM T;
+
+
+【需求】
+(1)请用至少3种方法：将上面数据进行行转列，运行结果如下所示：
+ SELECT * FROM  t_row_cols;   
+
+  oid       001          002         003         004
+   1    2023-08-01   2023-08-01               2023-08-03
+   2    2023-08-02   2023-08-02               2023-08-03
+   3    2023-08-02   2023-08-03
+--CASE WHEN 
+SELECT  T.OID,
+MAX(CASE WHEN T.OSTATUS = '001' THEN T.ODATE END) AS "001",
+MAX(CASE WHEN T.OSTATUS = '002' THEN T.ODATE END) AS "002",
+MAX(CASE WHEN T.OSTATUS = '003' THEN T.ODATE END) AS "003",
+MAX(CASE WHEN T.OSTATUS = '004' THEN T.ODATE END) AS "004"
+FROM  t_row_cols T GROUP BY T.OID;   
+   
+--DECODE
+SELECT  T.OID,
+MAX(DECODE(T.OSTATUS,'001',T.ODATE)) AS "001",
+MAX(DECODE(T.OSTATUS,'002',T.ODATE)) AS "002",
+MAX(DECODE(T.OSTATUS,'003',T.ODATE)) AS "003",
+MAX(DECODE(T.OSTATUS,'004',T.ODATE)) AS "004"
+FROM   t_row_cols T GROUP BY T.OID; 
+   
+--PIVOT
+SELECT *
+  FROM (SELECT OID, ODATE, OSTATUS FROM T_ROW_COLS)
+PIVOT(MAX(ODATE)
+   FOR OSTATUS IN('001' AS "001", '002', '003', '004'));
+   
+   
+(2)请用至少2种方法：将(1)中的结果列转行，运行结果如下所示：
+ oid ostatus      odate
+  1    001      2023-08-01
+  1    002      2023-08-01
+  2    001      2023-08-02
+  2    002      2023-08-02
+  3    001      2023-08-02
+  1    004      2023-08-03
+  2    004      2023-08-03
+  3    002      2023-08-03
+SELECT *
+  FROM (SELECT T.OID,
+               MAX(DECODE(T.OSTATUS, '001', T.ODATE)) AS "001",
+               MAX(DECODE(T.OSTATUS, '002', T.ODATE)) AS "002",
+               MAX(DECODE(T.OSTATUS, '003', T.ODATE)) AS "003",
+               MAX(DECODE(T.OSTATUS, '004', T.ODATE)) AS "004"
+          FROM t_row_cols T
+         GROUP BY T.OID) UNPIVOT(ODATE FOR ostatus IN("001",
+                                                      "002",
+                                                      "003",
+                                                      "004"));
+
+
+CREATE table t_groupBy_orderby_limitn(id int,
+                                      `name` varchar(50),
+                                      val int, 
+                                      desc1 varchar(50)); 
+insert into t_groupBy_orderby_limitn values(1,'a', 1, 'a111111') ,
+                                           (2,'b', 1, 'b11111111') ,
+                                           (3,'a', 2, 'a222222222'),
+                                           (4,'b', 2, 'b22222222222'),
+                                           (5,'a', 3, 'a3333333333333') ,
+                                           (6,'b', 3, 'b333333333333') ,
+                                           (7,'c', 1, 'c111111111111'),
+                                           (8,'b', 4, 'b44444444444444') ,
+                                           (9,'c', 2, 'c22222222222') ,
+                                           (10,'b', 5, 'b5555555555') 
+;
+SELECT * FROM t_groupBy_orderby_limitn;
+
+-- 理解下面的写法
+
+--1、按name分组取val最大的值所在行的数据 写出至少五种方法
+
+
+--1.0
+SELECT *
+  FROM (SELECT T.*, MAX(T.VAL) OVER(PARTITION BY T.NAME) ZG
+          FROM t_groupBy_orderby_limitn T)
+ WHERE VAL = ZG;
+
+--2.0
+SELECT *
+  FROM (SELECT ROW_NUMBER() OVER(PARTITION BY T.NAME ORDER BY T.VAL DESC) PM,
+               T.*
+          FROM t_groupBy_orderby_limitn T)
+ WHERE PM = 1;
+ 
+--3.0
+SELECT *
+  FROM t_groupBy_orderby_limitn T
+ WHERE (T.NAME, T.VAL) IN (SELECT A.NAME, MAX(A.VAL)
+                             FROM t_groupBy_orderby_limitn A
+                            GROUP BY A.NAME);
+
+--4.0
+SELECT *
+  FROM t_groupBy_orderby_limitn A
+  LEFT JOIN (SELECT B.NAME, MAX(B.VAL) ZD
+               FROM t_groupBy_orderby_limitn B
+              GROUP BY B.NAME) BB
+    ON A.NAME = BB.NAME
+   AND A.VAL = BB.ZD
+ WHERE BB.NAME IS NOT NULL;
+
+--5.0
+
+SELECT *
+  FROM t_groupBy_orderby_limitn A
+ WHERE 1 > ( --求B表比A表中VAL大的数量
+            SELECT COUNT(1) /*0*/
+              FROM t_groupBy_orderby_limitn B
+             WHERE A.NAME = B.NAME --伪分组
+               AND B.VAL /*532*/
+                   > A.VAL /*5*/
+            );
+
+A表 主
+张三 3
+张三 2
+张三 5
+
+B表 子
+张三 5
+张三 3
+张三 2

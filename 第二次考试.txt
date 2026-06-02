@@ -1,0 +1,78 @@
+--选择题
+1.C 2.A 3.B 4.ABC 5.B 6.BC 7.AB 8.B
+
+--分页查询
+SELECT A.*,ROWNUM FROM 表名 A WHERE ROWNUM < 6
+ORDER BY 年龄 DESC;
+
+--博物馆最长闭馆天数
+
+SELECT MAX(JG)
+  FROM (SELECT M.VISITORS,
+               M.RECORD_DATE - LAG(M.RECORD_DATE) OVER(ORDER BY M.RECORD_DATE) - 1 JG
+          FROM MUSEUM M);
+
+--查找手机号合法的客户号
+
+DECLARE
+  CURSOR C_A IS
+    SELECT * FROM 源数据表 WHERE REGEXP_LIKE(手机号, '^1[358]\d{9}$');
+  V_A NUMBER = 0;
+BEGIN
+  FOR I IN C_A LOOP
+    INSERT INTO 目标表 VALUES (I.客户号);
+    V_A := V_A + 1; --记录新增行数
+    IF MOD(V_A, 1000) = 0 THEN
+      COMMIT;
+    END IF;
+  END LOOP;
+  COMMIT; --提交剩余不能被1000整除的数据
+END;
+
+
+--对渠道表进行列转行操作
+
+SELECT 渠道,
+SUM(CASE WHEN TO_CHAR(日期,'Q')='1' THEN 营业额 END) AS 第一季度,
+SUM(CASE WHEN TO_CHAR(日期,'Q')='2' THEN 营业额 END) AS 第二季度,
+SUM(CASE WHEN TO_CHAR(日期,'Q')='3' THEN 营业额 END) AS 第三季度,
+SUM(CASE WHEN TO_CHAR(日期,'Q')='4' THEN 营业额 END) AS 第四季度
+FROM 渠道表 GROUP BY 渠道;
+
+
+--求出每个部门工资最高的前三名
+
+SELECT *
+  FROM (SELECT EMPNO,
+               SAL,
+               DEPTNO,
+               ROW_NUMBER() OVER(PARTITION BY DEPTNO ORDER BY SAL DESC) 部门薪资排名,
+               SUM(SAL) OVER(PARTITION BY DEPTNO) 部门总工资,
+               ROUND(RATIO_TO_REPORT(SAL) OVER(PARTITION BY DEPTNO), 2) 薪资占比
+          FROM EMP) A
+ WHERE A.部门薪资排名 < 4;
+
+
+--求每年累计入职人数
+SELECT TO_CHAR(HIREDATE, 'YYYY') 入职年,
+       COUNT(1) 本年总入职人数,
+       SUM(COUNT(1)) OVER(ORDER BY TO_CHAR(HIREDATE, 'YYYY')) 截止本年累计入职人数
+  FROM EMP
+ GROUP BY TO_CHAR(HIREDATE, 'YYYY');
+
+
+--求营销表天数
+
+SELECT A.BRAND,
+       SUM(CASE
+             WHEN A.E2 >= A.STARTDATE THEN
+              A.ENDDATE - A.E2
+             ELSE
+              A.ENDDATE - A.STARTDATE + 1
+           END) AS 天数
+  FROM (SELECT M.BRAND,
+               M.STARTDATE,
+               M.ENDDATE,
+               LAG(M.ENDDATE) OVER(PARTITION BY M.BRAND ORDER BY M.STARTDATE) E2
+          FROM MARKETING M) A
+ GROUP BY A.BRAND;

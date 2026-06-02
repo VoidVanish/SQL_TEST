@@ -1,0 +1,215 @@
+-- 1、查询姓“猴”的学生名单
+--1.0
+SELECT * FROM STUDENT WHERE SNAME LIKE'猴%';
+--2.0
+SELECT * FROM STUDENT WHERE SUBSTR(SNAME,1,1) = '猴';
+--3.0
+SELECT * FROM STUDENT WHERE INSTR(SNAME, '猴', 1, 1) = 1;
+--4.0 LTRIM(猴子,'猴')  子 <>猴子
+SELECT * FROM STUDENT WHERE LTRIM(SNAME,'猴') <> SNAME;
+
+-- 1.1查询姓名中最后一个字是聪的学生名单
+SELECT * FROM STUDENT WHERE SNAME LIKE'%聪';
+
+-- 1.2查询姓名中带猴的学生名单
+SELECT * FROM STUDENT WHERE SNAME LIKE'%猴%';
+
+
+-- 1.3、查询姓“孟”老师的个数
+
+SELECT COUNT(1) FROM TEACHER WHERE TNAME LIKE'孟%';
+
+
+--2、查询课程编号为“0002”的总成绩
+
+SELECT SUM(SSCORE) FROM SCORE WHERE  SCOURE = 2;
+
+-- 2.1、查询选了课程的学生人数
+SELECT * FROM STUDENT;
+SELECT * FROM COURSE
+SELECT * FROM TEACHER;
+SELECT * FROM SCORE;
+
+SELECT COUNT(DISTINCT SID) FROM SCORE;
+
+-- 3、查询各科创建最高和最低分数
+SELECT SCOURE, MAX(SSCORE), MIN(SSCORE) FROM SCORE GROUP BY SCOURE;
+
+-- 3.1、查询每门课程被选修学生数
+
+SELECT SCOURE,COUNT(SID) FROM SCORE GROUP BY SCOURE;
+
+-- 3.2、查询男生，女生人数
+--
+SELECT SGENDER,COUNT(1) FROM STUDENT GROUP BY SGENDER;
+--
+男  女
+ 3   1
+
+SELECT COUNT(CASE
+               WHEN SGENDER = '男' THEN
+                1
+             END) 男,
+       COUNT(CASE
+               WHEN SGENDER = '女' THEN
+                1
+             END) 女
+  FROM STUDENT;
+
+
+
+-- 4、查询平均成绩大于70分学生的学号和平均成绩
+
+SELECT SID, AVG(SSCORE) FROM SCORE GROUP BY SID HAVING AVG(SSCORE) > 70;
+
+-- 4.1、查询至少选修两门课程的学生学好
+
+SELECT SID, COUNT(SCOURE) FROM SCORE GROUP BY SID HAVING COUNT(SCOURE) > 1;
+
+
+-- 4.2、查询同名同性学生名单并统计同名人数
+--1.0姓
+SELECT SNAME, COUNT(1) FROM STUDENT GROUP BY SNAME HAVING COUNT(1) > 1;
+--2.0性
+SELECT SNAME, SGENDER, COUNT(1)
+  FROM STUDENT
+ GROUP BY SNAME, SGENDER
+HAVING COUNT(1) > 1;
+
+
+-- 4.3、查询不及格的课程并按课程号从大到小排列
+
+SELECT * FROM SCORE WHERE  SSCORE < 60 ORDER BY SCOURE DESC;
+
+-- 4.4、查询每门课程的平均成绩，结果按平均成绩升序排序，
+--平均成绩相同时，按课程号降序排列
+
+SELECT SCOURE, AVG(SSCORE) PJ
+  FROM SCORE
+ GROUP BY SCOURE
+ ORDER BY PJ ASC, SCOURE DESC;
+
+-- 4.5、检索课程编号为“0004”且分数小于60的学生学号，
+--结果按按分数降序排列
+
+SELECT *
+  FROM SCORE
+ WHERE SCOURE = 4
+   AND SSCORE < 60
+ ORDER BY SSCORE DESC;
+
+
+--4.6、统计每门课程的学生选修人数(超过2人的课程才统计)
+--要求输出课程号和选修人数，查询结果按人数降序排序，
+--若人数相同，按课程号升序排序
+
+select scoure,count(sid) rs
+from score
+group by sid
+order by rs desc,scoure
+
+SELECT SCOURE, COUNT(SID) RS
+  FROM SCORE
+ GROUP BY SCOURE
+ ORDER BY RS DESC, SCOURE ASC;
+
+
+-- 4.7、查询两门以上不及格课程的同学的学号及其平均成绩
+
+SELECT SID, AVG(SSCORE)		
+  FROM SCORE
+ GROUP BY SID
+HAVING COUNT(CASE WHEN SSCORE < 60 THEN 1 END) > 2;  ---having只做过滤不清楚数据 where会对行清除且不能用在组里
+					 	          ---having对组过滤 where对行过滤
+
+-- 5、查询学生的总成绩并进行排序
+
+SELECT SUM(SSCORE) CJ, SID FROM SCORE GROUP BY SID ORDER BY CJ;
+
+-- 5.1、查询平均成绩大于60分的学生学号和平均成绩        19
+
+SELECT SID, AVG(SSCORE) FROM SCORE GROUP BY SID HAVING AVG(SSCORE) > 60;
+
+--行列转换
+
+--列转行
+Y      Q1   Q2    Q3    Q4
+2015  100   110   140   100
+2016  200   150   100   300
+
+SELECT * FROM TEST_TABLE;
+
+--CASE WHEN
+SELECT Y,
+SUM(CASE WHEN Q=1 THEN AMT END) AS Q1,
+SUM(CASE WHEN Q=2 THEN AMT END) AS Q2,
+SUM(CASE WHEN Q=3 THEN AMT END) AS Q3,
+SUM(CASE WHEN Q=4 THEN AMT END) AS Q4
+FROM TEST_TABLE GROUP BY Y;
+
+--DECODE(字段名,判断条件,成立返回,不成立返回值(默认空))
+--        CASE   WHEN     THEN       ELSE 
+--只能进行等值判断
+SELECT DECODE(ENAME,'SCOTT','张三'),ENAME
+FROM EMP;
+
+--判断多个值
+SELECT DECODE(ENAME, 'SCOTT', '张三', 'SMITH', '李四', 'KING', '王五'),
+       ENAME
+  FROM EMP;
+
+--DECODE列转行
+
+SELECT Y,
+       MAX(DECODE(Q, 1, AMT)) Q1,
+       MAX(DECODE(Q, 2, AMT)) Q2,
+       MAX(DECODE(Q, 3, AMT)) Q3,
+       MAX(DECODE(Q, 4, AMT)) Q4
+  FROM TEST_TABLE
+ GROUP BY Y;
+
+--PIVOT列转行函数
+/*
+TABLE_NAME PIVOT(
+聚合函数(数据字段) FOR 关键字段 IN(关键字段的值)
+)*/
+SELECT * FROM TEST_TABLE 
+PIVOT(SUM(AMT) FOR Q IN(1 AS Q1,2 AS Q2,3 AS Q3,4 AS Q4));
+
+
+--行转列
+Y      Q1   Q2    Q3    Q4
+2015  100   110   140   100
+2016  200   150   100   300
+SELECT * FROM TEST_TABLE1;
+SELECT * FROM TEST_TABLE;
+
+--UNPVIOT
+/*
+TABLE_NAME UNPIVOT(
+数据字段名 FOR 关键字段名 IN(需要行转列的字段名)
+)*/
+
+SELECT *
+  FROM TEST_TABLE1 UNPIVOT(营业额 FOR 季度 IN(Q1 AS 1,
+                                         Q2 AS 2,
+                                         Q3 AS 3,
+                                         Q4 AS 4));
+--小练习
+--查询数据  1代表男  2代表女
+SELECT * FROM 人口;
+--目标结构
+国家    男    女 
+中国    340   260
+美国    45    55
+加拿大  51    49
+英国    40    60
+
+--对成绩表进行列转行,1是语文2是数学3是英语
+SELECT * FROM SCORE;
+
+
+--求每个学生最高成绩
+SELECT * FROM SCORE_1;
+
+

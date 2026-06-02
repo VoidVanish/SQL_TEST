@@ -1,0 +1,476 @@
+--使用FRO循环+PUT输出语句打印正三角
+
+    *       1*2-1
+   ***      2*2-1
+  *****     3*2-1
+ ******* 
+********* 
+ 
+DECLARE
+  V_A NUMBER := &输入行号;
+BEGIN
+  --A=12345
+  FOR A IN 1 .. V_A LOOP
+    --------空格
+    FOR B IN 1 .. V_A - A LOOP
+      DBMS_OUTPUT.put(' ');
+    END LOOP;
+    ---------星号
+    FOR I IN 1 .. 2 * A - 1 LOOP
+      DBMS_OUTPUT.put('*');
+    END LOOP;
+    DBMS_OUTPUT.new_line;
+  END LOOP;
+END;
+
+6.使用循环结构将一个字符型变量 str 反转，并输出反转后的字符串
+ABCD DCBA
+---1.0
+DECLARE
+  V_A VARCHAR2(100) := '&输入一个字符串'; --ABCD
+BEGIN
+  FOR I IN 1 .. LENGTH(V_A) LOOP
+    DBMS_OUTPUT.put(SUBSTR(V_A, -I, 1));
+  END LOOP;
+  DBMS_OUTPUT.new_line;
+END;
+
+--2.0 REVERSE()将字符串内容反转
+
+SELECT REVERSE('ABCD') FROM DUAL;
+
+--REVERSE搭配FOR循环使用
+
+BEGIN
+  FOR I IN REVERSE 1 .. 5 LOOP
+    DBMS_OUTPUT.put_line(I);
+  END LOOP;
+END;
+
+7.使用循环结构打印出以下图案
+*****
+****
+***
+**
+*
+--1.0
+BEGIN
+  --A12345
+  FOR A IN REVERSE 1 .. 5 LOOP
+    FOR I IN 1 .. A LOOP
+      DBMS_OUTPUT.put('*');
+    END LOOP;
+    DBMS_OUTPUT.new_line;
+  END LOOP;
+END;
+
+--2.0LPAD(字符串,指定长度(字节),指定字符)
+
+SELECT RPAD('ABCD',10,'=') FROM DUAL;
+
+BEGIN
+  FOR I IN REVERSE 1 .. 5 LOOP
+    DBMS_OUTPUT.put_line(LPAD('*', I, '*'));
+  END LOOP;
+END;
+
+
+8.使用循环结构打印出以下图案
+    *
+   **
+  ***
+ ****
+*****    
+
+BEGIN
+  FOR I IN 1 .. 5 LOOP
+    DBMS_OUTPUT.put_line(LPAD(LPAD('*', I, '*'), 5, ' '));
+  END LOOP;
+END;
+
+9.百元买鸡,小明的妈妈给他100元,买一百只鸡
+已知公鸡五元一只,母鸡三元一只,小鸡一元三只
+问有多少种买法 最多有66000      
+20 33 100
+
+
+BEGIN
+  FOR G IN 0 .. 20 LOOP
+    FOR M IN 0 .. 33 LOOP
+      FOR X IN 0 .. 100 LOOP
+        IF G + M + X = 100 AND G * 5 + M * 3 + X / 3 = 100 THEN
+          DBMS_OUTPUT.put_line('公 ' || G || ' 母 ' || M || ' 小 ' || X);
+        END IF;
+      END LOOP;
+    END LOOP;
+  END LOOP;
+END;
+
+
+
+
+10.打印乘法口诀表
+1*1=1
+1*2=2 2*2=4
+1*3=3 2*3=6 3*3=9
+有九行  第几行有几列
+
+BEGIN
+  FOR H IN 1 .. 9 LOOP
+    --控制行
+    FOR L IN 1 .. H LOOP
+      --控制列
+      IF H * L < 10 THEN
+        DBMS_OUTPUT.put(L || '*' || H || '=' || L * H || '  ');
+      ELSE
+        DBMS_OUTPUT.put(L || '*' || H || '=' || L * H || ' ');
+      END IF;
+      --1*3=3 2*3=6
+    END LOOP;
+    DBMS_OUTPUT.new_line;
+  END LOOP;
+END;
+
+H 3
+L 1 2 3
+H*L  1*1
+L*H  1*2  2*2
+L*H  1*3  2*3 3*3
+
+----游标
+    游标是指向查询结果集的一个指针，通过游标可以将查询结果集中的记录逐一取出，
+    并在PL/SQL程序块中进行处理。
+    游标的类型有两种：隐式游标和显式游标。隐式游标是由系统自动创建并管理的游标。
+    PL/SQL会为所有的sql数据操作声明一个隐式的游标，包括只返回一条记录的查询操作。
+    对于返回多条记录的查询，必须自己创建显式游标。
+
+
+--显式游标 CURSOR
+DECLARE
+  --CURSOR C_游标名 IS SELECT 查询语句;
+  CURSOR C_A IS
+    SELECT * FROM EMP;
+  V_A EMP%ROWTYPE;
+BEGIN
+  OPEN C_A; --打开游标
+  --只能将游标中的数据逐行赋值给变量,再通过变量使用游标内数据
+  --FETCH 游标名 INTO 变量名; INTO两边字段数量数据类型保持一致
+  LOOP
+    FETCH C_A
+      INTO V_A;
+    EXIT WHEN C_A%NOTFOUND; --退出循环条件
+    DBMS_OUTPUT.put_line(V_A.ENAME || V_A.SAL);
+  END LOOP;
+  --游标不能直接输出  
+  --DBMS_OUTPUT.put_line(C_A);
+  CLOSE C_A; --关闭游标
+END;
+
+--游标属性：*********游标名%属性名
+%FOUND 布尔型属性，当最近一次读取记录时成功返回，则值为TRUE，否则为FALSE。
+%NOTFOUND  布尔型属性，与%FOUND相反。
+%ISOPEN  布尔型属性，当游标已打开时返回TRUE，否则返回FALSE。
+%ROWCOUNT  数字型属性，返回已从游标中读取的记录数。
+
+--游标搭配WHILE循环使用
+
+DECLARE
+  CURSOR C_A IS
+    SELECT * FROM EMP;
+  V_A EMP%ROWTYPE;
+BEGIN
+  OPEN C_A;
+  FETCH C_A
+    INTO V_A; --进入循环的条件
+  --只有进行了查找操作,才能判断是都找到数据 
+  WHILE C_A%FOUND LOOP
+    DBMS_OUTPUT.put_line(V_A.ENAME || V_A.SAL);
+    FETCH C_A
+      INTO V_A; --获取游标内下一条数据
+  END LOOP;
+  CLOSE C_A;
+END;
+
+--带参游标 1.定义参数 2.传参
+--一个参数就是一个过滤条件
+
+传入一个部门编号,输出该部门的姓名和工资
+
+DECLARE
+  --P_参数名 数据类型(不能加长度)
+  CURSOR C_A(P_BM NUMBER,P_SAL NUMBER) IS
+    SELECT * FROM EMP WHERE DEPTNO = P_BM
+    AND SAL > P_SAL;
+  V_A EMP%ROWTYPE;
+BEGIN
+--参数定义后一定要传参
+  OPEN C_A(P_BM => 20,P_SAL => 2000);
+  LOOP
+    FETCH C_A
+      INTO V_A;
+    EXIT WHEN C_A%NOTFOUND;
+    DBMS_OUTPUT.put_line(V_A.ENAME || V_A.DEPTNO);
+  END LOOP;
+  CLOSE C_A;
+END;
+
+
+小练习：
+对于EMP1表中SALESMAN和MANAGER，
+如果这个员工工资小于1000，就给他加300奖金
+如果这个员工工资1000到2000，就给他加200奖金
+如果这个员工工资大于2000，就给他加100奖金
+输出员工编号，员工名字，员工工资，员工奖金
+        
+DECLARE
+  CURSOR C_A IS
+    SELECT * FROM EMP WHERE JOB IN ('SALESMAN', 'MANAGER');
+  V_A EMP%ROWTYPE;
+BEGIN
+  OPEN C_A;
+  LOOP
+    FETCH C_A
+      INTO V_A;
+    EXIT WHEN C_A%NOTFOUND;
+    IF V_A.SAL < 1000 THEN
+      V_A.COMM := NVL(V_A.COMM, 0) + 300;
+    ELSIF V_A.SAL <= 2000 THEN
+      V_A.COMM := NVL(V_A.COMM, 0) + 200;
+    ELSE
+      V_A.COMM := NVL(V_A.COMM, 0) + 100;
+    END IF;
+    DBMS_OUTPUT.put_line(V_A.EMPNO || V_A.ENAME || V_A.SAL || '  ' ||
+                         V_A.COMM);
+  END LOOP;
+  CLOSE C_A;
+END;
+        
+--游标搭配FOR循环使用
+PL/SQL语言提供了游标FOR循环语句，自动执行游标OPEN、FETCH、CLOSE语句和
+循环语句的功能；当进入循环时，游标FOR循环语句自动打开游标，并提取第一行游标数据，
+当程序处理完当前所提取的数据而进入下一次循环时，游标FOR循环语句自动提取下一行数据
+供程序处理，当提取完结果集中的所有数据行后结束循环，并自动关闭游标。
+
+DECLARE
+  CURSOR C_A(P_BM NUMBER) IS
+    SELECT * FROM EMP WHERE DEPTNO = P_BM;
+BEGIN
+  --FOR I IN 游标名 LOOP
+  FOR I IN C_A(20) LOOP
+    DBMS_OUTPUT.put_line(I.ENAME || I.SAL || I.JOB);
+  END LOOP;
+END;
+
+--FOR循环支持使用子查询代替游标
+BEGIN
+  FOR I IN (SELECT * FROM EMP) LOOP
+    DBMS_OUTPUT.put_line(I.ENAME || I.SAL || I.JOB);
+  END LOOP;
+END;
+        
+小练习：
+用游标FOR循环操作EMP1表
+如果这个员工的岗位是ANALYST或者CLERK或者SALESMAN，就给该员工加500元奖金
+如果这个员工的岗位是MANAGER，就给该员工加800块奖金
+如果这个员工的岗位是PRESIDENT，不做处理        
+        
+DECLARE
+  CURSOR C_A IS
+    SELECT * FROM EMP1;
+
+BEGIN
+  FOR I IN C_A LOOP
+    IF I.JOB IN ('ANALYST', 'CLERK', 'SALESMAN') THEN
+      I.COMM := NVL(I.COMM, 0) + 500;
+    ELSIF I.JOB = 'MANAGER' THEN
+      I.COMM := NVL(I.COMM, 0) + 800;
+    END IF;
+    DBMS_OUTPUT.put_line(I.JOB || I.COMM);
+  END LOOP;
+END;
+
+        
+
+题目：
+--创建一个表格：使用循环，往表格里面添加1--200的所有的数字  
+--建表语句
+CREATE TABLE TEST10(NU NUMBER(3));
+
+--新增语句
+BEGIN
+  FOR I IN 1 .. 200 LOOP
+    INSERT INTO TEST10 VALUES (I);
+  END LOOP;
+  COMMIT;
+END;
+
+做如下题目：
+--查询刚才这个test10表，找出这个表格中两两相加等于288的数字，
+--将它们的组合都打印出来     88 200  200 88   
+  
+--ORACLE
+SELECT *
+  FROM TEST10 A
+  JOIN TEST10 B
+    ON A.NU + B.NU = 288
+   AND A.NU < B.NU;
+   
+--PLSQL
+DECLARE
+  CURSOR C_A IS
+    SELECT * FROM TEST10;
+  CURSOR C_B IS
+    SELECT * FROM TEST10;
+BEGIN
+  FOR A IN C_A LOOP
+    --200
+    FOR B IN C_B LOOP
+      --200
+      IF A.NU + B.NU = 288 AND A.NU < B.NU THEN
+        DBMS_OUTPUT.put_line(A.NU || '+' || B.NU || '=288');
+      END IF;
+    END LOOP;
+  END LOOP;
+END;
+
+--隐式游标
+显式游标主要是用于对查询语句的处理，尤其是在查询结果为多条记录的情况下；
+而对非查询语句如修改、删除(DML)操作，则由oracle自动为这些操作设置游标，
+这些由系统隐含创建的游标称为隐式游标，隐士游标的名字为SQL，这些由oracle系统定义的隐式游标的操作，
+如定义、打开、取值及关闭操作，都由oracle自动完成，无需用户处理。
+用户只能通过隐式游标的相关属性，来完成相应的操作。
+
+SQL%ISOPEN 布尔型属性，取值总是FALSE，SQL命令执行完毕立即关闭隐式游标。
+SQL%FOUND 布尔型属性，当最近一次读取记录时成功返回，则值为TRUE，否则为FALSE。
+SQL%NOTFOUND  布尔型属性，与SQL%FOUND相反。
+SQL%ROWCOUNT  数字型属性，返回已从游标中读取的记录数。        
+     
+--语法结构
+DECLARE
+  V_A NUMBER;
+BEGIN
+  --DELETE FROM EMP1 WHERE DEPTNO = 20;
+  --UPDATE EMP1 SET ENAME = 'AAA' WHERE DEPTNO = 30;
+  --INSERT INTO EMP1 SELECT * FROM EMP;
+  SELECT SAL INTO V_A FROM EMP WHERE EMPNO = 7788;
+  IF SQL%FOUND THEN
+    DBMS_OUTPUT.put_line('操作成功');
+  END IF;
+  IF SQL%NOTFOUND THEN
+    DBMS_OUTPUT.put_line('操作失败');
+  END IF;
+  DBMS_OUTPUT.put_line('操作了' || SQL%ROWCOUNT || '条数据');
+END;
+
+
+--动态SQL
+    在PL/SQL程序开发中，可以使用DML语句，但是很多语句(如DDL)
+    不能直接在PL/SQL中执行，这些语句可以使用动态SQL来实现。
+    使用动态方式，可以执行任何类型的sql语句。
+    语法格式：
+      EXECUTE IMMEDIATE 动态语句字符串
+      [INTO 变量列表]可选 SELECT 查询语句
+      [USING 参数列表] 可选
+
+
+--语法结构
+--使用动态sql运行DDL语句
+BEGIN
+  EXECUTE IMMEDIATE 'DROP TABLE EMP1';
+  --DROP TABLE EMP1
+END;
+
+--使用动态SQL执行DML语句
+BEGIN
+ EXECUTE IMMEDIATE ' DELETE FROM EMP1';
+END;
+
+--传入一个员工编号,删除该员工信息
+DECLARE
+  V_EMPNO NUMBER := &编号;
+BEGIN
+  EXECUTE IMMEDIATE 'DELETE FROM EMP1 WHERE  EMPNO = ' || V_EMPNO;
+  --输出语句输出什么内容,动态SQL就执行什么内容
+  DBMS_OUTPUT.put_line('DELETE FROM EMP1 WHERE  EMPNO = ' || V_EMPNO);
+END;
+
+--传入一个员工姓名,删除该员工信息
+DECLARE
+  V_ENAME VARCHAR2(20) := '&姓名';
+BEGIN
+  EXECUTE IMMEDIATE 'DELETE FROM EMP1 WHERE ENAME = ' ||
+                       CHR(39) || V_ENAME ||CHR(39);
+  DBMS_OUTPUT.put_line('DELETE FROM EMP1 WHERE ENAME = ' ||
+                       '''' || V_ENAME ||'''');
+END;
+---ASCII
+SELECT ASCII('''') FROM DUAL;
+
+--CHR() 将ASCII值转为对应字符
+SELECT CHR(39) FROM DUAL;
+
+----USING传参
+--传入一个员工姓名,删除该员工信息
+DECLARE
+  V_ENAME VARCHAR2(20) := '&姓名';
+BEGIN
+  --动态sql参数 :P_参数名
+  EXECUTE IMMEDIATE 'DELETE FROM EMP1 WHERE ENAME = :P_NAME
+  AND SAL > :P_SAL'
+    USING V_ENAME, 200;
+END;
+
+--INTO赋值
+--传入一个员工编号,输出他的员工姓名
+DECLARE
+  V_EMPNO NUMBER := &bian; --7788
+  V_ENAME VARCHAR2(20);
+BEGIN
+  EXECUTE IMMEDIATE 'SELECT ENAME FROM EMP WHERE  EMPNO = :P_EMPNO'
+    INTO V_ENAME
+    USING V_EMPNO;
+  DBMS_OUTPUT.put_line(V_ENAME);
+END;
+
+--动态SQL支持将代码封装到变量中执行
+DECLARE
+V_SQL VARCHAR2(200) :='DELETE FROM EMP1';
+BEGIN
+  EXECUTE IMMEDIATE  V_SQL;
+END;
+
+--运行HHH字段下的四条插入语句面试题
+SELECT * FROM DTSQL;
+        
+DECLARE
+  CURSOR C_A IS
+    SELECT * FROM DTSQL;
+BEGIN
+  FOR I IN C_A LOOP
+    --DBMS_OUTPUT.put_line(I.HHH);
+    EXECUTE IMMEDIATE I.HHH;
+  END LOOP;
+END;
+        
+--将scott用户里面，EMP1和DEPT1表中所有不够200长度的varchar2数据类型，
+--长度修改为200
+  表字段信息表：user_tab_columns(数据字典)  
+SELECT * FROM USER_TAB_COLUMNS WHERE TABLE_NAME IN('EMP1','DEPT1');  
+   
+EMP1 DEPT1
+ALTER TABLE
+
+  
+  表信息表：user_tables
+-- 将当前scott用户前五个表格，全部都备份一份出来
+--如果有一个emp表，将这个表复制一个新的表，名字为emp_20230418;   --(系统当前的年月日)
+--原表名 +  '_'  + 当前系统日期(年月日)
+SELECT * FROM USER_TABLES;--当前用户下所有表格信息        
+        
+        
+        
+        
+        
+        
+        
+       

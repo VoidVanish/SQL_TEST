@@ -1,0 +1,306 @@
+--函数
+    过程和函数统称为PL/SQL子程序，他们是被命名的PL/SQL块，均存储在数据库中，
+    并通过输入、输出参数或输入/输出参数与其调用者交换信息。
+
+--过程和函数的区别是*****
+函数总向调用者返回数据，而过程不返回数据。
+函数可以在查询语句中调用,存储过程不可以    
+函数只有入参,存储过程有三种参数    
+    
+--语法格式：FUNCTION
+CREATE OR REPLACE FUNCTION FUN_A(P_A NUMBER, P_B NUMBER) RETURN NUMBER
+--声明函数返回值的数据类型(不能写长度)
+ IS
+  --声明部分
+  V_SUM NUMBER;
+BEGIN
+  V_SUM := P_A + P_B;
+  --声明函数具体的返回值
+  RETURN V_SUM;
+  --函数有且仅有一个返回值
+  --返回值的数据类型要和声明的数据类型保持一致
+END;
+    
+--调用
+SELECT  FUN_A(10,90) FROM DUAL;
+
+--在代码块中调用
+BEGIN
+ DBMS_OUTPUT.put_line( FUN_A(20,30));
+END;
+
+--求任意两数之间的偶数和
+CREATE OR REPLACE FUNCTION FUN_A(P_A NUMBER, P_B NUMBER) RETURN NUMBER IS
+  V_SUM NUMBER := 0;
+BEGIN
+  FOR I IN LEAST(P_A, P_B) .. GREATEST(P_A, P_B) LOOP
+    IF MOD(I, 2) = 0 THEN
+      V_SUM := V_SUM + I;
+    END IF;
+  END LOOP;
+  RETURN V_SUM;
+END;
+
+--调用
+SELECT FUN_A(10,20) FROM  DUAL;
+
+传入三个数字求出之间的最大值
+
+CREATE OR REPLACE FUNCTION FUN_A(A NUMBER, B NUMBER, C NUMBER)
+  RETURN NUMBER IS
+  V_MAX NUMBER;
+BEGIN
+  V_MAX := A;
+  IF B > A THEN
+    V_MAX := B;
+  END IF;
+  IF C > V_MAX THEN
+    V_MAX := C;
+  END IF;
+  RETURN V_MAX;
+END;
+
+--调用
+SELECT FUN_A(100,20,30) FROM DUAL;
+
+返回用户明年预期的工资是多少，
+输入一个员工的编号，10号部门涨工资10%，20号涨20%，30号涨30%，
+返回这个员工的预期工资。
+7369 800 20 960
+
+CREATE OR REPLACE FUNCTION FUN_A(P_EMPNO NUMBER) RETURN NUMBER IS
+  V_BM  NUMBER;
+  V_SAL NUMBER;
+BEGIN
+  SELECT DEPTNO, SAL INTO V_BM, V_SAL FROM EMP WHERE EMPNO = P_EMPNO;
+  IF V_BM = 10 THEN
+    RETURN V_SAL * 1.1;
+  ELSIF V_BM = 20 THEN
+    RETURN V_SAL * 1.2;
+  ELSIF V_BM = 30 THEN
+    RETURN V_SAL * 1.3;
+  END IF;
+END;
+
+--调用
+SELECT FUN_A(7369) FROM DUAL;
+
+
+创建一个函数,可以提取字符串中的数字
+'A1B2C3D4'
+--1.0
+CREATE OR REPLACE FUNCTION FUN_A(P_A VARCHAR2) RETURN NUMBER IS
+BEGIN
+  RETURN REGEXP_REPLACE(P_A, '\D');
+END;
+
+
+  --2.0ASCII 48 57
+CREATE OR REPLACE FUNCTION FUN_A(P_A VARCHAR2) RETURN NUMBER IS
+  V_A NUMBER;
+BEGIN
+  FOR I IN 1 .. LENGTH(P_A) LOOP
+    IF ASCII(SUBSTR(P_A, I, 1)) BETWEEN 48 AND 57 THEN
+      V_A := V_A || SUBSTR(P_A, I, 1);
+    END IF;
+  END LOOP;
+  RETURN V_A;
+END;
+
+
+SELECT ASCII('9') FROM  DUAL;
+--调用
+SELECT FUN_A('A1B2C3D4') FROM DUAL;
+
+
+--包 PACKAGE
+    包就是把相关的存储过程、函数、变量、常量和游标等PL/SQL程序组合在一起，
+    并赋予一定的管理功能的程序块。
+    一个程序包由两部分组成：包定义和包体。其中包定义部分声明包内
+    数据类型、变量、常量、游标、子程序和函数等元素，这些元素为包的共有元素，
+    包体则定义了包定义部分的具体实现。
+    
+    
+--语法结构
+
+----------------创建包头(声明部分)
+
+CREATE OR REPLACE PACKAGE BAO IS
+  --不能写BEGIN
+  V_A NUMBER;
+  --存储过程 输出HELLO WORLD
+  PROCEDURE SP_A;
+  --自定义函数  计算两数乘积
+  FUNCTION FUN_A(P_A NUMBER, P_B NUMBER) RETURN NUMBER;
+END;
+/
+--/是结束符号 必须独占一行
+--包头包体保持完全一致,元素数量,元素名称
+----------------创建包体(执行部分) 
+CREATE OR REPLACE PACKAGE BODY BAO IS
+  --V_B NUMBER;不能在声明元素
+  --存储过程
+  PROCEDURE SP_A IS
+  BEGIN
+    DBMS_OUTPUT.put_line('HELLO WORLD');
+  END SP_A;
+  --自定义函数
+  FUNCTION FUN_A(P_A NUMBER, P_B NUMBER) RETURN NUMBER IS
+  BEGIN
+    RETURN P_A * P_B;
+  END FUN_A;
+END BAO;
+    
+--调用 包名.元素名
+BEGIN
+  --存储过程
+  BAO.SP_A;
+  --函数
+  BAO.V_A := BAO.FUN_A(10, 30);
+  DBMS_OUTPUT.put_line(BAO.V_A);
+END;
+
+
+--创建一个包
+--第一个函数 向dept插入一条数据，插入成共返回1，插入失败返回2;
+
+--第二个函数传入一个部门编号，删除该部们信息,成功返回一 失败返回2
+
+--第三个存储过程传入一个部门名称，返回该部门的员工信息
+
+----------------创建包头
+CREATE OR REPLACE PACKAGE BAO IS
+  V_A NUMBER;
+  --函数一
+  FUNCTION FUN_A(P_BM NUMBER, P_DNAME VARCHAR2, P_LOC VARCHAR2) RETURN NUMBER;
+  --函数二
+  FUNCTION FUN_B(P_BM NUMBER) RETURN NUMBER;
+  --存储过程
+  PROCEDURE SP_A(P_DNAME VARCHAR2);
+END BAO;
+
+----------------创建包体
+CREATE OR REPLACE PACKAGE BODY BAO IS
+  --函数一
+  FUNCTION FUN_A(P_BM NUMBER, P_DNAME VARCHAR2, P_LOC VARCHAR2) RETURN NUMBER IS
+  BEGIN
+    INSERT INTO DEPT1 VALUES (P_BM, P_DNAME, P_LOC);
+    IF SQL%FOUND THEN
+      RETURN 1;
+    ELSE
+      RETURN 2;
+    END IF;
+  END FUN_A;
+  --函数二
+  FUNCTION FUN_B(P_BM NUMBER) RETURN NUMBER IS
+  BEGIN
+    DELETE FROM DEPT1 WHERE DEPTNO = P_BM;
+    IF SQL%FOUND THEN
+      RETURN 1;
+    ELSE
+      RETURN 2;
+    END IF;
+  END FUN_B;
+  --存储过程
+  PROCEDURE SP_A(P_DNAME VARCHAR2) IS
+    CURSOR C_A IS
+      SELECT E.*
+        FROM EMP E
+        JOIN DEPT D
+          ON E.DEPTNO = D.DEPTNO
+       WHERE D.DNAME = P_DNAME;
+  BEGIN
+    FOR I IN C_A LOOP
+      DBMS_OUTPUT.put_line(I.ENAME || I.DEPTNO);
+    END LOOP;
+  END SP_A;
+END BAO;
+
+--调用
+BEGIN
+  --函数一
+  BAO.V_A := BAO.FUN_A(90, '大数据', '北京');
+  DBMS_OUTPUT.put_line(BAO.V_A);
+  
+  --函数二
+  BAO.V_A := BAO.FUN_B(30);
+  DBMS_OUTPUT.put_line(BAO.V_A);
+
+  --存储过程
+  BAO.SP_A('ACCOUNTING');
+END;
+
+--查询语句无法实现DML效果
+SELECT BAO.FUN_B(20) FROM DUAL;
+
+
+
+小练习:
+存储过程：新增一个部门，输入一个部门的编号、名称、地点，
+如果这个编号和名字没有重复，就插入数据，否则就弹框提示该部门已存在
+
+函数：传入一个年份，返回他的属相，已知1900年生肖是鼠
+
+存储过程：传入一个部门编号，查询该部门下员工信息，
+然后将查询结果返回  
+----------------创建包头   
+CREATE OR REPLACE PACKAGE BAO IS
+  --存储过程1
+  PROCEDURE SP_A(P_BM NUMBER, P_DNAME VARCHAR2, P_LOC VARCHAR2);
+  --函数
+  FUNCTION FUN_A(P_Y NUMBER) RETURN VARCHAR2;
+  --存储过程2
+  PROCEDURE SP_B(P_BM NUMBER);
+END;
+/
+----------------创建包体    
+CREATE OR REPLACE PACKAGE BODY BAO IS
+  --存储过程1
+  PROCEDURE SP_A(P_BM NUMBER, P_DNAME VARCHAR2, P_LOC VARCHAR2) IS
+    V_C NUMBER;
+  BEGIN
+    SELECT COUNT(1)
+      INTO V_C
+      FROM DEPT1
+     WHERE DEPTNO = P_BM
+        OR DNAME = P_DNAME;
+    IF V_C = 0 THEN
+      INSERT INTO DEPT1 VALUES (P_BM, P_DNAME, P_LOC);
+    ELSE
+      DBMS_OUTPUT.put_line('该部门已存在');
+    END IF;
+  END SP_A;
+  --函数
+  FUNCTION FUN_A(P_Y NUMBER) RETURN VARCHAR2 IS
+    V_A NUMBER;
+    V_B VARCHAR2(24) := '鼠牛虎兔龙蛇马羊猴鸡狗猪';
+  BEGIN
+    --1900 鼠 1912 鼠 1914 虎 
+    V_A := MOD(P_Y - 1900, 12);
+    IF V_A >= 0 THEN
+      RETURN SUBSTR(V_B, V_A + 1, 1);
+    ELSE
+      RETURN SUBSTR(V_B, V_A, 1);
+    END IF;
+  END FUN_A;
+  --存储过程2
+  PROCEDURE SP_B(P_BM NUMBER) IS
+    CURSOR C_A IS
+      SELECT * FROM EMP WHERE DEPTNO = P_BM;
+  BEGIN
+    FOR I IN C_A LOOP
+      DBMS_OUTPUT.put_line(I.ENAME || I.DEPTNO);
+    END LOOP;
+  END SP_B;
+END;
+    
+--调用
+BEGIN
+  --存储过程
+  BAO.SP_A(23, '大数据', '北京');
+  --函数
+  DBMS_OUTPUT.put_line(BAO.FUN_A(2026));
+  --存储过程
+  BAO.SP_B(30);
+END;
+

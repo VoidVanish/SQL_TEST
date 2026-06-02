@@ -1,0 +1,563 @@
+流程控制
+    9.2.1条件控制
+      IF THEN
+        IF 条件 THEN
+          执行逻辑1;
+        END IF;
+        (1)用IF关键字开始，END IF关键字结束，注意END IF后加分号；
+        (2)条件部分可以不使用括号，但是必须以关键字THEN来表示条件结束，
+          如果条件成立，则执行THEN后到END IF之间的执行逻辑，
+          如果条件不成立，则不执行条件语句块。
+        (3)条件可以使用关系运算符和逻辑运算符。
+        
+--语法结构
+--布尔类型是一种数据类型 TRUE 1 /FALSE 0
+BEGIN
+  --IF 判断条件(返回值必须是布尔类型) THEN
+  IF 1 = 1 THEN
+    --执行部分
+    DBMS_OUTPUT.put_line('你数学真好');
+  END IF;
+END;
+        
+--多条件判断
+DECLARE
+  V_A NUMBER := &输入数字;
+BEGIN
+  IF V_A = 1 AND 1 = 2 THEN
+    --条件判断1
+    --执行逻辑1
+    DBMS_OUTPUT.put_line('上班');
+  ELSIF V_A = 2 THEN
+    --上面条件不成立时,才会执行下一个条件判断
+    --条件判断2
+    --执行逻辑2
+    DBMS_OUTPUT.put_line('下班');
+  ELSIF V_A = 3 THEN
+    --判断条件3
+    --执行逻辑3
+    DBMS_OUTPUT.put_line('加班');
+  ELSE
+    --上述所有条件都不成立时执行ELSE
+    --执行逻辑4
+    DBMS_OUTPUT.put_line('放假');
+  END IF;
+END;
+
+传入一个员工编号
+操作EMP1表
+如果这个员工的岗位是ANALYST或者CLERK或者SALESMAN，
+就给该员工加500元奖金
+如果这个员工的岗位是MANAGER，就给该员工加800块奖金
+如果这个员工的岗位是PRESIDENT，不做处理
+
+DECLARE
+  V_EMPNO NUMBER := &员工编号; --7788
+  V_JOB   VARCHAR2(20);
+BEGIN
+  SELECT JOB INTO V_JOB FROM EMP WHERE EMPNO = V_EMPNO;
+  IF V_JOB IN ('ANALYST', 'CLERK', 'SALESMAN') THEN
+    UPDATE EMP1 SET COMM = NVL(COMM, 0) + 500 WHERE EMPNO = V_EMPNO;
+  ELSIF V_JOB = 'MANAGER' THEN
+    UPDATE EMP1 SET COMM = NVL(COMM, 0) + 800 WHERE EMPNO = V_EMPNO;
+  END IF;
+END;
+
+小练习：
+传入一个员工编号
+如果这个员工工资小于1000，就给他加300奖金
+如果这个员工工资1000到2000，就给他加200奖金
+如果这个员工工资大于2000，就给他加100奖金
+输出员工编号，员工名字，员工工资，员工奖金(涨薪后)
+
+
+DECLARE
+  V_A EMP%ROWTYPE;
+BEGIN
+  V_A.EMPNO := &员工编号; --7788
+  SELECT * INTO V_A FROM EMP1 WHERE EMPNO = V_A.EMPNO;
+  IF V_A.SAL < 1000 THEN
+    V_A.COMM := NVL(V_A.COMM, 0) + 300;
+  ELSIF V_A.SAL <= 2000 THEN
+    V_A.COMM := NVL(V_A.COMM, 0) + 200;
+  ELSE
+    V_A.COMM := NVL(V_A.COMM, 0) + 100;
+  END IF;
+  UPDATE EMP1 SET COMM = V_A.COMM WHERE EMPNO = V_A.EMPNO;
+  DBMS_OUTPUT.put_line(V_A.EMPNO || V_A.ENAME || V_A.SAL || '-' ||
+                       V_A.COMM);
+END;
+
+--IF嵌套
+传入一个员工编号，如果该员工是'ANALYST','CLERK','SALESMAN'
+岗位就加500工资，如果该员工工资在3000以上则再加500，
+如果是MANAGER岗位则加800工资
+
+DECLARE
+  V_EMPNO NUMBER := &输入编号;
+  V_JOB   VARCHAR2(20);
+  V_SAL   NUMBER;
+BEGIN
+  SELECT JOB, SAL INTO V_JOB, V_SAL FROM EMP WHERE EMPNO = V_EMPNO;
+  IF V_JOB IN ('ANALYST', 'CLERK', 'SALESMAN') THEN
+    --7788 CLERK 2501
+    IF V_SAL > 3000 THEN
+      --外层条件成立时,才会执行嵌套的IF判断
+      V_SAL := V_SAL + 1000;
+    ELSE
+      V_SAL := V_SAL + 500;
+    END IF;
+    --V_SAL := V_SAL + 500;--岗位的涨薪
+  ELSIF V_JOB = 'MANAGER' THEN
+    V_SAL := V_SAL + 800;
+  END IF;
+  DBMS_OUTPUT.put_line(V_EMPNO || V_JOB || V_SAL);
+END;
+
+输入两个员工编号将工资高的这个员工的名字打印出来。
+(相同打印两人姓名  禁止输入两个相同员工编号)
+
+DECLARE
+  V_A EMP%ROWTYPE;
+  V_B EMP%ROWTYPE;
+BEGIN
+  V_A.EMPNO := &编号1;
+  V_B.EMPNO := &编号2;
+  IF V_A.EMPNO = V_B.EMPNO THEN
+    DBMS_OUTPUT.put_line('禁止输入两个相同员工编号');
+  ELSE
+    SELECT * INTO V_A FROM EMP WHERE EMPNO = V_A.EMPNO;
+    SELECT * INTO V_B FROM EMP WHERE EMPNO = V_B.EMPNO;
+    IF V_A.SAL > V_B.SAL THEN
+      DBMS_OUTPUT.put_line(V_A.ENAME);
+    ELSIF V_B.SAL > V_A.SAL THEN
+      DBMS_OUTPUT.put_line(V_B.ENAME);
+    ELSE
+      DBMS_OUTPUT.put_line(V_A.ENAME || V_B.ENAME);
+    END IF;
+  END IF;
+END;
+
+传入一个员工编号，打印出这个工资对应的等级，2000以下C，
+2000-3000是B，3000以上是A
+
+DECLARE
+  V_EMPNO NUMBER := &编号;
+  V_SAL   NUMBER;
+BEGIN
+  SELECT SAL INTO V_SAL FROM EMP WHERE EMPNO = V_EMPNO;
+  IF V_SAL < 2000 THEN
+    DBMS_OUTPUT.put_line('C');
+  ELSIF V_SAL <= 3000 THEN
+    DBMS_OUTPUT.put_line('B');
+  ELSE
+    DBMS_OUTPUT.put_line('A');
+  END IF;
+END;
+
+
+
+输入一个员工编号(=&员工编号)，如果编号在表中是不存在的，
+则打印没有这个人，如果用户编号存在，
+则打印这个员工的名字。
+
+DECLARE
+  V_EMPNO NUMBER := &编号;
+  V_ENAME VARCHAR2(20);
+  V_C     NUMBER;
+BEGIN
+  SELECT COUNT(1) INTO V_C FROM EMP WHERE EMPNO = V_EMPNO;
+  IF V_C = 0 THEN
+    DBMS_OUTPUT.put_line('没有这个人');
+  ELSE
+    SELECT ENAME INTO V_ENAME FROM EMP WHERE EMPNO = V_EMPNO;
+    DBMS_OUTPUT.put_line(V_ENAME);
+  END IF;
+END;
+
+
+--CASE WHEN判断
+
+DECLARE
+  V_A NUMBER := &编号;
+BEGIN
+  CASE
+    WHEN V_A = 1 THEN
+      DBMS_OUTPUT.put_line('吃饭');
+    WHEN V_A = 2 THEN
+      DBMS_OUTPUT.put_line('睡觉');
+    WHEN V_A = 3 THEN
+      DBMS_OUTPUT.put_line('打游戏');
+    ELSE
+      DBMS_OUTPUT.put_line('学习');
+  END CASE;
+END;
+
+--循环 需要做大量且重复性的操作可以使用循环代替
+
+--语法结构
+--LOOP
+DECLARE
+  V_A NUMBER := 0; --记录循环次数 每循环一次加一
+BEGIN
+  --开始循环
+  LOOP
+    --设置退出循环的条件
+    -- IF V_A = 10 THEN
+    EXIT WHEN V_A = 10; --退出循环
+        V_A := V_A + 1;
+    -- END IF;
+    --循环体
+    DBMS_OUTPUT.put_line('HELLO ' || V_A);
+  END LOOP; --结束循环
+END;
+
+--WHILE循环
+DECLARE
+  V_A NUMBER := 0;
+BEGIN
+  -- WHILE 进入循环的条件 LOOP
+  WHILE V_A < 10 LOOP
+    V_A := V_A + 1; --循环一次加一
+    DBMS_OUTPUT.put_line('HELLO ' || V_A);
+  END LOOP;
+END;
+
+--FOR循环 知道准确循环次数时使用FOR循环次
+BEGIN
+  --FOR I(临时变量) IN 下限 .. 上限 LOOP
+  --上下限只要是是类型的值即可)
+  FOR I IN 1.4 .. 10 LOOP
+    DBMS_OUTPUT.put_line('HELLO ' || I);
+  END LOOP;
+END;
+
+
+--CONTINUE 结束本次循环,继续下一次
+BEGIN
+  FOR I IN 1 .. 10 LOOP
+    IF I = 5 THEN
+      CONTINUE;
+    END IF;
+    DBMS_OUTPUT.put_line(I);
+  END LOOP;
+END;
+
+
+--EXIT 结束整个循环
+BEGIN
+  FOR I IN 1 .. 10 LOOP
+    IF I = 5 THEN
+      EXIT;
+    END IF;
+    DBMS_OUTPUT.put_line(I);
+  END LOOP;
+END;
+
+--求10以内累加值
+1 2 3 4 5 6 7 8 9 10
+
+---------------------------LOOP
+DECLARE
+  V_A   NUMBER := 0; --次数
+  V_SUM NUMBER := 0; --记录累加值
+BEGIN
+  LOOP
+    V_A := V_A + 1;
+    EXIT WHEN V_A > 10;
+    V_SUM := V_SUM + V_A; --累加循环次数
+    DBMS_OUTPUT.put_line(V_A);
+  END LOOP;
+  DBMS_OUTPUT.put_line(V_SUM);
+END;
+
+-----------------------WHILE
+DECLARE
+  V_A   NUMBER := 0; --次数
+  V_SUM NUMBER := 0; --记录累加值
+BEGIN
+  WHILE V_A < 10 LOOP
+    V_A   := V_A + 1; --记录循环次数
+    V_SUM := V_SUM + V_A;
+    DBMS_OUTPUT.put_line(V_A);
+  END LOOP;
+  DBMS_OUTPUT.put_line(V_SUM);
+END;
+
+----------------FOR
+DECLARE
+  V_SUM NUMBER := 0;
+BEGIN
+  FOR I IN 1 .. 10 LOOP
+    V_SUM := V_SUM + I;
+    DBMS_OUTPUT.put_line(I);
+  END LOOP;
+  DBMS_OUTPUT.put_line(V_SUM);
+END;
+
+--求10以内偶数和
+
+DECLARE
+  V_A   NUMBER := 0; --次数
+  V_SUM NUMBER := 0; --记录累加值
+BEGIN
+  WHILE V_A < 10 LOOP
+    V_A := V_A + 1; --记录循环次数
+    IF MOD(V_A, 2) = 0 THEN
+      --进入判断就是偶数
+      V_SUM := V_SUM + V_A;
+      DBMS_OUTPUT.put_line(V_A);
+    END IF;
+  END LOOP;
+  DBMS_OUTPUT.put_line('偶数和: ' || V_SUM);
+END;
+
+---FOR
+DECLARE
+  V_SUM NUMBER := 0;
+BEGIN
+  FOR I IN 1 .. 10 LOOP
+    IF MOD(I,2)=0 THEN
+      V_SUM := V_SUM + I;
+    DBMS_OUTPUT.put_line(I);
+    END IF;
+  END LOOP;
+    DBMS_OUTPUT.put_line('偶数和: ' || V_SUM);
+END;
+
+--CONITNUE
+DECLARE
+  V_SUM NUMBER := 0;
+BEGIN
+  FOR I IN 1 .. 10 LOOP
+    IF MOD(I, 2) <> 0 THEN
+      --奇数进入判断
+      CONTINUE;
+    END IF;
+    V_SUM := V_SUM + I;
+    DBMS_OUTPUT.put_line(I);
+  END LOOP;
+  DBMS_OUTPUT.put_line('偶数和: ' || V_SUM);
+END;
+
+--传入任意两个数字,求出两数字之间的偶数和
+10-234  345-89
+--1.0
+DECLARE
+  V_A   NUMBER := &数字1; --10
+  V_B   NUMBER := &数字2; --20
+  V_SUM NUMBER := 0;
+BEGIN
+  IF V_A < V_B THEN
+    FOR I IN V_A .. V_B LOOP
+      IF MOD(I, 2) = 0 THEN
+        V_SUM := V_SUM + I;
+        DBMS_OUTPUT.put_line(I);
+      END IF;
+    END LOOP;
+  ELSIF V_B < V_A THEN
+    FOR I IN V_B .. V_A LOOP
+      IF MOD(I, 2) = 0 THEN
+        V_SUM := V_SUM + I;
+        DBMS_OUTPUT.put_line(I);
+      END IF;
+    END LOOP;
+  END IF;
+  DBMS_OUTPUT.put_line(V_SUM);
+END;
+
+---
+DECLARE
+  V_A   NUMBER := &数字1; --10
+  V_B   NUMBER := &数字2; --20
+  V_SUM NUMBER := 0;
+BEGIN
+  FOR I IN LEAST(V_B, V_A) .. GREATEST(V_B, V_A) LOOP
+    IF MOD(I, 2) = 0 THEN
+      V_SUM := V_SUM + I;
+      DBMS_OUTPUT.put_line(I);
+    END IF;
+  END LOOP;
+  DBMS_OUTPUT.put_line(V_SUM);
+END;
+
+1.使用一个for循环，打印出下面的图案
+*
+**
+***
+****
+*****
+
+DECLARE
+  V_A VARCHAR2(20) := '*';
+BEGIN
+  FOR I IN 1 .. 5 LOOP
+    DBMS_OUTPUT.put_line(V_A);
+    V_A := V_A || '*';
+  END LOOP;
+END;
+
+
+2.假设现在有鸡和兔子，一共有35只，它们的脚一共有94个，
+使用一个for循环计算出鸡和兔子分别有多少只。
+穷举法
+
+BEGIN
+  --假设全是鸡
+  FOR I IN 0 .. 35 LOOP
+    IF I * 2 + (35 - I) * 4 = 94 THEN
+      DBMS_OUTPUT.put_line('鸡: ' || I || ' 兔: ' || (35 - I));
+    END IF;
+  END LOOP;
+END;
+
+3.纸厚度1mm，珠穆朗玛峰高度8848m，问纸要对折多少次，
+高度才会超过山
+
+DECLARE
+  V_A NUMBER := 1; --纸的厚度
+  V_B NUMBER := 0; --对折次数
+BEGIN
+  WHILE V_A <= 8848000 LOOP
+    V_A := V_A * 2; --厚度翻倍
+    V_B := V_B + 1; --对折次数
+    DBMS_OUTPUT.put_line('对折: ' || V_B || ' 纸 ' || V_A);
+  END LOOP;
+  DBMS_OUTPUT.put_line('对折次数: ' || V_B);
+END;
+
+
+4.从今天开始存钱，今天存1分，明天2分，后天4分，每天翻倍，
+问要几天才能存够100W元。
+日存款  总存款  天
+
+DECLARE
+  V_A NUMBER := 0; --总存款
+  V_B NUMBER := 1; --日存款
+  V_C NUMBER := 0; --天
+BEGIN
+  WHILE V_A < 100000000 LOOP
+    V_A := V_A + V_B; --累加日存款
+    V_C := V_C + 1; --天数
+    DBMS_OUTPUT.put_line('天: ' || V_C || ' 日存 ' || V_B || ' 总 ' || V_A);
+    V_B := V_B * 2; --日存款翻倍
+  END LOOP;
+  DBMS_OUTPUT.put_line('天: ' || V_C);
+END;
+
+
+
+
+5.使用一个while循环，打印出下面的图案 
+ 
+*********   2*5-1
+ *******    2*4-1
+  *****     2*3-1
+   ***      2*2-1
+    *       2*1-1
+
+DECLARE
+  V_A VARCHAR2(30) := '*********';
+  V_B VARCHAR2(20); --空格
+  V_C NUMBER := 0; --循环次数
+BEGIN
+  WHILE V_C < 5 LOOP
+    V_C := V_C + 1; --记录次数
+    DBMS_OUTPUT.put_line(V_B || V_A);
+    V_A := SUBSTR(V_A, 3); --星号每次少俩
+    V_B := V_B || ' '; --空格每次多一个
+  END LOOP;
+END;
+
+
+--PUT
+--外层循环每循环一次,嵌套的循环会循环至上限
+DECLARE
+  V_A NUMBER := 0; --星号
+  V_B NUMBER := 0;
+  V_C NUMBER := 0; --空格
+  V_D NUMBER := &输入行号;
+BEGIN
+  WHILE V_B < V_D LOOP
+    --控制行
+    --------控制空格-------------
+    WHILE V_C  < V_B LOOP
+      DBMS_OUTPUT.put(' ');
+      V_C := V_C + 1;
+    END LOOP;
+    ------控制星号的循环--------
+    WHILE V_A < 2 * (V_D - V_B) - 1 LOOP
+      --控制列
+      V_A := V_A + 1;
+      DBMS_OUTPUT.put('*');
+    END LOOP;
+    DBMS_OUTPUT.new_line;
+    ----------------------
+    V_A := 0;
+    V_C := 0;
+    V_B := V_B + 1;
+  END LOOP;
+END;
+
+缓冲区:*********
+
+
+
+--PUT输出语句(不换行)
+--先将内容打印在缓冲区,读取到换行符时,将内容显示在屏幕上
+BEGIN
+  --没有换行符
+  DBMS_OUTPUT.put('李四');
+  DBMS_OUTPUT.put('张三');
+  DBMS_OUTPUT.new_line;--提供换行符
+ -- DBMS_OUTPUT.put_line(''); 
+END;
+
+
+--PUT_LINE输出语句(自动换行)
+
+BEGIN
+  --自带换行符
+  DBMS_OUTPUT.put_line('张三');
+  DBMS_OUTPUT.put_line('李四');
+END;
+
+--使用FRO循环+PUT输出语句打印正三角
+
+    *
+   ***
+  *****
+ ******* 
+*********  
+   
+6.使用循环结构将一个字符型变量 str 反转，并输出反转后的字符串
+ABCD DCBA
+
+
+7.使用循环结构打印出以下图案
+*****
+****
+***
+**
+*
+
+
+8.使用循环结构打印出以下图案
+    *
+   **
+  ***
+ ****
+*****    
+     
+9.百元买鸡,小明的妈妈给他100元,买一百只鸡
+已知公鸡五元一只,母鸡三元一只,小鸡一元三只
+问有多少种买法      
+
+
+
+10.打印乘法口诀表
+1*1=1
+1*2=2 2*2=4
+1*3=3 2*3=6 3*3=9
+
+

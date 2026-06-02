@@ -1,0 +1,160 @@
+--复杂查询
+-- 6、查询所有课程成绩小于80分学生的学号、姓名
+逻辑：查询每个学生的所有课程都小于八十分 则求每个学生最大 
+  
+SELECT S.SID, S.SNAME
+  FROM STUDENT S
+  JOIN SCORE W
+    ON S.SID = W.SID
+ GROUP BY S.SID, S.SNAME
+HAVING MAX(W.SSCORE) < 80;
+
+-- 6.1、查询没有学全所有课的学生的学号、姓名
+  
+SELECT S.SNAME, S.SID, COUNT(W.SCOURE)
+  FROM STUDENT S
+  LEFT JOIN SCORE W
+    ON S.SID = W.SID
+ GROUP BY S.SNAME, S.SID
+HAVING COUNT(W.SCOURE) < (SELECT COUNT(SCOURE) FROM COURSE);
+
+--6.2、查询出只选修了两门课程的全部学生的学号和姓名
+
+SELECT S.SNAME, S.SID, COUNT(W.SCOURE)
+  FROM STUDENT S
+  LEFT JOIN SCORE W
+    ON S.SID = W.SID
+ GROUP BY S.SNAME, S.SID
+HAVING COUNT(W.SCOURE) = 2;
+
+-- 7.查询所有学生的学号、姓名、选课数、总成绩
+
+SELECT S.SNAME, S.SID, COUNT(W.SCOURE), SUM(W.SSCORE)
+  FROM STUDENT S
+  LEFT JOIN SCORE W
+    ON S.SID = W.SID
+ GROUP BY S.SNAME, S.SID;
+
+-- 7.2、查询学生的选课情况：学号，姓名，课程号，课程名称
+SELECT * FROM STUDENT;
+SELECT * FROM COURSE;
+SELECT  * FROM SCORE;
+
+SELECT S.SID, S.SNAME, C.SCOURE, C.CNAME
+  FROM STUDENT S
+  LEFT JOIN SCORE W
+    ON W.SID = S.SID
+  LEFT JOIN COURSE C
+    ON C.SCOURE = W.SCOURE;
+
+-- 7.3、查询出每门课程的及格人数和不及格人数（***）
+
+SELECT SCOURE,
+       COUNT(CASE
+               WHEN SSCORE < 60 THEN
+                1
+             END) AS 不及格,
+       COUNT(CASE
+               WHEN SSCORE >= 60 THEN
+                1
+             END) AS 及格
+  FROM SCORE
+ GROUP BY SCOURE;
+
+-- 7.4、使用分段[100-85],[85-70],[70-60],[<60]来统计各科成绩，
+--分别统计：各分数段人数，课程号和课程名称
+
+SELECT C.SCOURE,
+       C.CNAME,
+       COUNT(CASE
+               WHEN S.SSCORE <= 100 AND S.SSCORE > 85 THEN
+                1
+             END) AS "[100-85]",
+       COUNT(CASE
+               WHEN S.SSCORE <= 85 AND S.SSCORE > 70 THEN
+                1
+             END) AS "[85-70]",
+       COUNT(CASE
+               WHEN S.SSCORE <= 70 AND S.SSCORE >= 60 THEN
+                1
+             END) AS "[70-60]",
+       COUNT(CASE
+               WHEN S.SSCORE < 60 THEN
+                1
+             END) AS "[<60]"
+  FROM SCORE S
+  LEFT JOIN COURSE C
+    ON S.SCOURE = C.SCOURE
+ GROUP BY C.SCOURE, C.CNAME;
+
+
+ --9.多表连接
+--9.1、检索0001课程分数小于90，按照分数降序排列的学生信息
+
+SELECT S.*
+  FROM STUDENT S
+  LEFT JOIN SCORE W
+    ON S.SID = W.SID
+ WHERE W.SCOURE = 1
+   AND W.SSCORE < 90
+ ORDER BY W.SSCORE DESC;
+
+
+-- 9.2、查询不同老师所教授不同课程平均分从高到低显示
+
+SELECT C.CTEACHER, C.SCOURE, AVG(S.SSCORE) PJ
+  FROM SCORE S
+  LEFT JOIN COURSE C
+    ON S.SCOURE = C.SCOURE
+ GROUP BY C.CTEACHER, C.SCOURE
+ ORDER BY PJ DESC;
+
+-- 9.4、查询任何一门课程成绩在70分以上的姓名、课程名称和分数（与上题类似）
+
+SELECT * FROM STUDENT S LEFT JOIN SCORE W ON
+S.SID = W.SID LEFT JOIN COURSE C ON C.SCOURE = W.SCOURE
+WHERE W.SSCORE > 70;
+
+
+-- 12.6、查询课程编号为“0001”的课程比“0002”的课程成绩
+--等于或者低的所有学生的学号，成绩，和课程号
+ 
+SELECT *
+  FROM SCORE A
+  JOIN SCORE B
+    ON A.SCOURE = 1
+   AND B.SCOURE = 2
+   AND A.SID = B.SID
+   AND A.SSCORE <= B.SSCORE;
+
+
+
+--12.7、查询学过“孟扎扎”老师所教的所有课的同学的学号、姓名
+ SELECT S.SID, S.SNAME, COUNT(C.CNAME)
+   FROM STUDENT S
+   LEFT JOIN SCORE W
+     ON S.SID = W.SID
+   LEFT JOIN COURSE C
+     ON C.SCOURE = W.SCOURE
+   LEFT JOIN TEACHER T
+     ON T.CTEACHER = C.CTEACHER
+  WHERE T.TNAME = '孟扎扎'
+  GROUP BY S.SID, S.SNAME
+ HAVING COUNT(C.CNAME) = (SELECT COUNT(1)
+                            FROM COURSE C
+                            JOIN TEACHER T
+                              ON T.CTEACHER = C.CTEACHER
+                           WHERE T.TNAME = '孟扎扎');
+
+-- 12.8、查询没学过"孟扎扎"老师讲授的任一门课程的学生姓名       
+
+SELECT *
+  FROM STUDENT S
+ WHERE S.SID NOT IN (SELECT W.SID
+                       FROM SCORE W
+                       LEFT JOIN COURSE C
+                         ON C.SCOURE = W.SCOURE
+                       LEFT JOIN TEACHER T
+                         ON T.CTEACHER = C.CTEACHER
+                      WHERE T.TNAME = '孟扎扎');
+

@@ -1,0 +1,198 @@
+
+选择题（不定项，每题2分）
+1.	在ORACLE数据库运行下列哪个GROUP BY查询时会产生错误？(C)
+A.	SELECT DEPTNO, JOB, SUM(SAL) FROM EMP GROUP BY JOB, DEPTNO;
+B.	SELECT SUM(SAL), DEPTNO, JOB FROM EMP GROUP BY JOB, DEPTNO;
+C.	SELECT DEPTNO, JOB, SUM(SAL) FROM EMP;
+D.	SELECT DEPTNO, SUM(SAL), JOB FROM EMP GROUP BY JOB, DEPTNO;
+2.	下面哪几种操作属于DDL(A)
+A.	TRUNCATE
+B.	SELECT2
+C.	UPDATE
+D.	INSERT
+
+3.	ORACLE数据库中，通过（B）访问能够以最快的方式访问表中的一行。
+A.		主键
+B.	ROWID
+C.	唯一索引
+D.	全表扫描
+
+4.	下列关于NULL的描述中，正确的是（B C）
+A.	当实际值是未知或没有任何意义时，可以使用NULL来表示它
+B.	不要使用NULL来代表0，两者是不同的
+C.	不要使用NULL来代替空格，两个是不同的
+D.	算术表达式1000 + NULL结果等于1000
+
+5.	在ORACLE中，执行下面的语句：
+
+SELECT CEIL(-97.342),
+
+FLOOR(-97.342),
+
+ROUND(-97.342),
+
+TRUNC(-97.342)
+	
+FROM DUAL;
+
+哪个函数的返回值不等于-97（B）
+
+A、CEIL()   
+B、FLOOR()   
+C、ROUND()   
+D、TRUNC()
+
+6.	下列关于ORALCE索引的说法错误的是?（B C D）
+A.	索引可以提升查询，分组和排序的性能。
+B.	为了提高查询性能，可以增加尽量多的索引。
+C.	使用索引一定比使用全表扫描效率更高。
+D.	对于数据量很少的表可以不使用索引。 8
+
+7.	表T有如下索引INDEX(A,B,C),请问如下查询哪些可能使用该索引(	B C) 
+A.	T.A=1 AND T.B=2 AND T.C=3
+B.	T.A=1 AND T.B=2 
+C.	T.B=2 AND T.C=3
+
+
+8.	在ORACLE中，下面用于限制分组函数的返回结果的子句是 (B)
+A.	WHERE
+B.	HAVING 
+C.	ORDER BY
+
+
+	
+主观题  3
+题1(5分)：假设在ORACLE数据库存在表 T_EFUND_EMPLOYEE
+   (S_ID  VARCHAR2(10),
+   S_NAME VARCHAR2(30),
+   N_AGE   NUMBER,
+   S_PHONE VARCAHR2(15)
+)
+请写一段分页查询代码，按照年龄降序返回员工列表。
+SELECT * FROM (
+SELECT T.*, ROWNUM RN FROM (
+SELECT * FROM T_EFUND_EMPLOYEE ORDER BY N_AGE) T) WHERE ROWNUM<=50) T1 WHERE T1.RN>0;
+
+题3（15分）现有一个数据表MUSEUM，记录了一个小型博物馆每天的访客数量： 10
+RECORD_DATE	VISITORS
+20160705	371
+20160706	128
+20160709	85
+20160710	246
+20160712	169
+
+博物馆会不定期闭馆，闭馆当天不会向该表添加记录，例如上面缺少的20160707、20160708、20160711三天为闭馆。尝试以查询SQL或存储过程的形式，求该博物馆曾最长连续闭馆多少天。（时间范围以RECORD_DATE字段的最小值、最大值为准）
+以上面5行数据为例，求出的结果为2，即20160705～20160712这个时间范围内，最长闭馆2天，对应20160707、20160708；如果表中的日期数据是连续的，求出的结果为0。
+
+--求曾经连续闭馆最长时间 题目表示最长闭馆时间是两天 最短为一天 每个开放时间的间隔
+--就是闭馆时间 用循环 判断时间与日期计数器是否一致 若为连续开放 则不是闭馆 闭馆计数器不加1 
+SELECT * FROM MUSEUM
+
+  --存储过程
+  CREATE OR REPLACE PROCEDURE P_MUSEUM IS
+  CURSOR C_A IS
+    SELECT RECORD_DATE, VISITORS FROM MUSEUM;
+  --定义闭馆计数器
+  V_BG NUMBER:=0;
+  --定义日期核对器
+  --判断musum表与当前核对器的日期是否相同 DATE;
+  V_A    MUSEUM%ROWTYPE; --第一行
+  V_DATE DATE; ---核对器
+BEGIN
+  --获取开始日期 
+  OPEN C_A;
+  FETCH C_A
+    INTO V_A;
+  V_DATE := V_A.RECORD_DATE;
+  CLOSE C_A;
+  --DBMS_OUTPUT.put_line(V_DATE);
+  DBMS_OUTPUT.put_line(V_BG);
+  --判断musum表与当前核对器的日期是否相同
+  FOR I IN C_A LOOP
+    --第一个数已存在
+  
+    IF V_DATE = I.RECORD_DATE THEN
+      V_DATE := I.RECORD_DATE; --相同则当前日期等于计数器
+    ELSIF V_BG < (I.RECORD_DATE) -( V_DATE) - 1 THEN
+      V_BG   := I.RECORD_DATE - V_DATE - 1;
+      V_DATE := I.RECORD_DATE + 1; -- 不相同则赋值给闭馆计数器
+    ELSE
+      V_DATE := I.RECORD_DATE;
+    END IF;
+    -- END IF;
+  END LOOP;
+  DBMS_OUTPUT.put_line('最长闭馆天数为  '||  V_BG ||'  天');
+END;
+
+--调用
+BEGIN 
+  P_MUSEUM();
+END;
+
+
+
+
+题5(10分)已知一个客户手机号码表，T_CUSTMOBILE(CUSTNO NUMBER,MOBILENO VARCHAR2(20));请通过程序实现对该表数据进行逐条遍历，找出手机号码合法的客户号，并将客户号保存到T_TMPCUST(CUSTNO NUMBER)表中，并考虑当数据量较大的情况下实现分批提交事务。 8
+已知手机号码合法的检查规则：号码由长度11位的数字组成，并由13、15、18开头，请优先考虑使用正则表达式。
+--筛选对的手机号
+DROP TABLE T_TMPCUST
+CREATE TABLE T_TMPCUST(CUSTNO NUMBER);
+SELECT * FROM T_TMPCUST
+--总
+CREATE TABLE T_TMPCUST AS
+SELECT T1.CUSTNO
+          FROM (SELECT T.*, ROWNUM RN
+                  FROM (SELECT CUSTNO, MOBILENO
+                          FROM T_CUSTMOBILE
+                         WHERE REGEXP_LIKE(T_CUSTMOBILE.CUSTNO,
+                                           '^1[358][0-9]{9}$')) T) T1
+         WHERE T1.RN <= 50;
+
+
+
+
+题6(10分)已知一张渠道每日销售量表   5
+T_AGENCY_SALESTATS
+(AGENCYNO VARCHAR2(10),--渠道
+SALEDATE DATE,--日期 20190223
+SALECOUNT NUMBER);--销售量
+按照要求统计各渠道2019年各季度的销售数量,按照如下表格输出统计结果。
+ 
+
+--展示每个季度
+SELECT T.*,TO_CHAR(SALEDATE,'Q') 季度 FROM T_AGENCY_SALESTATS T
+--根据季度分组
+
+SELECT T1.AGENCYNO,T1.SALECOUNT,T1.季度,SUM(T1.SALECOUNT)OVER(PARTITION BY T1.季度) 销售数量
+FROM (
+SELECT T.*,TO_CHAR(SALEDATE,'Q') 季度 FROM T_AGENCY_SALESTATS T) T1
+
+---CASE WHEN
+SELECT T2.AGENCYNO 渠道,
+       SUM(CASE        WHEN T2.季度 = 1 THEN T2.销售数量 END) 第一季度,
+       SUM(CASE        WHEN T2.季度 = 2 THEN T2.销售数量 END) 第二季度,
+       SUM(CASE        WHEN T2.季度 = 3 THEN T2.销售数量 END) 第三季度,
+       SUM(CASE        WHEN T2.季度 = 4 THEN T2.销售数量 END) 第四季度
+  FROM (SELECT T1.AGENCYNO,
+               T1.SALECOUNT,
+               T1.季度,
+               SUM(T1.SALECOUNT) OVER(PARTITION BY T1.季度) 销售数量
+          FROM (SELECT T.*, TO_CHAR(SALEDATE, 'Q') 季度
+                  FROM T_AGENCY_SALESTATS T) T1) T2 GROUP BY T2.AGENCYNO;
+/*
+SELECT * FROM T_AGENCY_SALESTATS
+DROP TABLE T_AGENCY_SALESTATS
+CREATE TABLE T_AGENCY_SALESTATS
+(AGENCYNO VARCHAR2(10),--渠道
+SALEDATE DATE,--日期 20190223
+SALECOUNT NUMBER);--销售量
+SELECT * FROM T_AGENCY_SALESTATS FOR UPDATE
+*/
+
+
+
+
+
+
+
+

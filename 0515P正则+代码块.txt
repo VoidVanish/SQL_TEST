@@ -1,0 +1,448 @@
+SELECT * FROM G0328;
+--表G0328如下,ID为自增长列，累计金额刚好超过100的那一条？
+
+-- 不用分析函数，请用字段嵌套子查询做出来，预期结果如下：
+
+ --------------------------
+ | ID | 金额  |  累加值   | 
+ --------------------------
+ | 6  |  1    |   101     | 
+ --------------------------
+
+--主表是G表 子表是B表
+--拿主表的每一行匹配子表的所有行
+SELECT *
+  FROM (SELECT G.ID,
+               G.金额,
+               (SELECT SUM(B.金额) FROM G0328 B WHERE B.ID <= G.ID) 累加值
+          FROM G0328 G) A
+ WHERE A.累加值 > 100
+   AND ROWNUM = 1;
+
+--请用一个SQL写出本年存入和取现总金额及当前存款余额,
+查询结果如下图
+CUST_ID  CUST_NAME    BAL   存入总金额   取现总金额
+ 111       张三       300     150           230
+ 222       李四       100     200           null
+ 333       王五       150     null          30
+ 444       lee        500     null          null
+ 555       sql        null    null          null
+
+SELECT * FROM cust_tal; --存款客户信息表
+SELECT * FROM bal_info; --客户账户余额信息表
+SELECT * FROM AMT_INF ; --账户交易流水信息表
+--聚合函数只能和分组后的字段或者其他聚合函数一起使用
+
+SELECT C.CUST_ID,
+       C.CUST_NAME,
+       SUM(BAL) BAL,
+       SUM(AA.存入总金额) 存入总金额,
+       SUM(AA.取现总金额) 取现总金额
+  FROM CUST_TAL C
+  LEFT JOIN BAL_INFO B
+    ON C.CUST_ID = B.CUST_ID
+  LEFT JOIN (SELECT A.ACCT_ID,
+                    SUM(CASE
+                          WHEN A.TRADE_TYPE = '存入' THEN
+                           AMT
+                        END) 存入总金额,
+                    SUM(CASE
+                          WHEN A.TRADE_TYPE = '取现' THEN
+                           AMT
+                        END) 取现总金额
+               FROM AMT_INF A
+              GROUP BY A.ACCT_ID) AA
+    ON AA.ACCT_ID = B.ACCT_ID
+ GROUP BY C.CUST_ID, C.CUST_NAME;
+
+--从左连接实现内连接的效果
+--对从表关联字段进行非空操作
+SELECT *
+  FROM DEPT D
+  LEFT JOIN EMP E
+    ON E.DEPTNO = D.DEPTNO
+ WHERE E.DEPTNO IS NOT NULL;
+
+--使用一句SQL,求出所有比赛组合
+SELECT * FROM QD A JOIN QD B ON A.NAME > B.NAME;
+
+A    B
+1    1
+2    1
+4    3 
+5    4
+6    5 
+7    6
+
+全外连接
+1    1
+1    1
+4    4
+5    5
+6    6
+7    NULL
+2    NULL
+NULL 3
+
+右外连接
+1    1
+1    1
+NULL 3
+4    4
+5    5
+6    6
+
+
+左外连接
+1    1
+1    1
+2    NULL
+4    4
+5    5
+6    6
+7    NULL
+
+
+内连接
+1    1
+1    1
+4    4
+5    5
+6    6
+ 
+检查手机号是否合法
+长度11位 全部是数字 必须1开头 第二位3589
+^1[3589][0-9]{9}$
+^表示开始
+$表示结束
+[]一组可能会出现的字符
+{}匹配次数
+{A,B} 最少匹配A次,最多匹配B次
+{A,}最少匹配A次,最多无数次
++ 匹配一次或者无数次
+* 匹配0次或者无数次
+? 匹配0次或者1次
+\ 转义字符
+- 表示区间 0-9匹配所有数字
+\d 表示所有的数字0-9
+--小写转大写表示取反 \d 数字 \D 非数字
+\w 表示所有数字,小写字母,大写字母[0-9A-Za-z]
+.  表示任意字符
+|  表示或者的意思
+() 表示一组正则表达式
+[^] 表示取反 [^0-9]非数字
+
+
+--小练习
+1.查询value中以1开头60结尾的记录并且长度是7位
+
+SELECT * FROM MOHU WHERE VALUE LIKE'1____60';
+
+2.查询value中以1开头60结尾的记录并且长度是7位且全部是数字的记录   
+
+SELECT * FROM MOHU WHERE REGEXP_LIKE(VALUE,'^1\d{4}60$'); 
+  
+3.查询 value 中不包含任何数字的记录
+--1.
+SELECT * FROM MOHU WHERE REGEXP_LIKE(VALUE,'^\D+$');
+--2.
+SELECT * FROM MOHU WHERE NOT REGEXP_LIKE(VALUE,'\d');
+
+4.查询 value 中不是纯数字的记录
+
+SELECT * FROM MOHU WHERE REGEXP_LIKE(VALUE,'(\d\D)|(\D\d)');
+
+5.查询以 12 或 1b 开头的记录，区分大小写
+
+SELECT * FROM MOHU WHERE REGEXP_LIKE(VALUE,'^1[2b]','c');
+
+
+6.查询以 12 或 1b 开头的记录，不区分大小写
+
+SELECT * FROM MOHU WHERE REGEXP_LIKE(VALUE,'^1[2b]','c');
+
+7.查询所有均为 小写字母 或 数字的记录
+
+SELECT * FROM MOHU WHERE REGEXP_LIKE(VALUE,'(^\d+$)|(^[a-z]+$)','c');
+
+
+REGEXP_SUBSTR
+参数一 字符串
+参数二 正则表达式
+参数三 起始位置 默认1
+参数四 匹配次数 默认1
+参数五 i  c
+
+--语法结构 截取第一次出现的数字
+SELECT REGEXP_SUBSTR('ABC789EFG456','\d+',1,1)  FROM DUAL;
+
+--截取市区 
+SELECT * FROM DQ;
+
+SELECT SUBSTR(DZ,
+              INSTR(DZ, '-') + 1,
+              INSTR(DZ, '-', 1, 2) - INSTR(DZ, '-') - 1)
+  FROM DQ;
+
+--正则
+SELECT REGEXP_SUBSTR(DZ,'[^-]+',1,3) FROM DQ;
+
+小练习
+SELECT * FROM JIEQU ;
+--拆分出邮箱
+用户名   邮箱格式
+aB1      @qq.com
+
+--筛选出固定电话和手机号码
+SELECT * FROM DIANHUA;
+固定电话格式：0开头 + 2到3位任意数字 + '-' + 6到7位任意数字
+手机号码格式：1开头 + 10位任意数字（11位）
+
+
+REGEXP_INSTR
+参数一  字符串
+参数二  正则表达式
+参数三  起始位置 默认1
+参数四  匹配次数 默认1
+参数五  (默认)0返回首字符的位置 1-9返回末尾字符的位置在加一
+参数六  i  c
+
+--查找数字第一次出现的位置
+SELECT REGEXP_INSTR('ACB123EFG456','\d+',1,2,0) FROM DUAL;
+
+REGEXP_REPLACE
+参数一 字符串
+参数二 正则表达式
+参数三 新的值 默认空
+参数四 起始位置 默认1
+参数五 匹配次数 默认0
+参数六 i  c
+
+--替换字符串中的数字
+SELECT REGEXP_REPLACE('ACB123EFG456','\d','=',1,0) FROM DUAL;
+
+
+--有一个字符串  'JDSAHDJSA143214K32JK252^*%' 提取里面的数字
+
+SELECT REGEXP_REPLACE('JDSAHDJSA143214K32JK252^*%', '\D') FROM DUAL;
+
+--有一个字符串  'JDSAHDJSA143214K32JK252^*%' 提取里面的英文字母
+
+SELECT REGEXP_REPLACE('JDSAHDJSA143214K32JK252^*%', '[^A-Za-z]') FROM DUAL;
+
+
+格式化手机号，将+86 13811112222转换为(+86) 138-1111-2222
+
+SELECT REGEXP_REPLACE('+86 13811112222',
+                      '(\+\d{2})( \d{3})(\d{4})',
+                      '(\1)\2-\3-')
+  FROM DUAL;
+
+--PL/SQL 存储过程
+  oracle PL/SQL语言(Procedural Language/SQL)是结合了结构化查询与oracle自身
+  过程控制为一体的强大语言。
+  语法结构：
+    DECLARE
+      --declaration statements (1)
+    BEGIN
+      --executable statements (2)
+    EXCEPTION
+      --exception statements (3)
+    END;
+  语法解析：
+    (1)声明部分：声明部分包含了变量和常量的定义，这部分由关键字DECLARE开始，
+      如果不声明变量或者常量，可以省略这部分。
+    (2)执行部分：执行部分是PL/SQL块的指令部分，由关键字BEGIN开始，关键字END结束。
+      所有的可执行PL/SQL语句都放在这一部分，该部分执行命令并操作变量。
+      其他的PL/SQL块可以作为子块嵌套在该部分。PL/SQL块的执行部分是必选的。
+      注意END关键字后面用分号结尾。
+    (3)异常处理部分：该部分是可选的，该部分用EXCEPTION关键字把可执行部分分成两个小部分，
+      之前的程序是正常运行的程序，一旦出现异常就跳转到异常部分执行。
+
+
+--语法结构
+DECLARE
+--声明部分 声明代码块所需的变量,常量,游标,数据类型等(可选)
+--接收数据的容器 字面量
+BEGIN
+--执行部分 编写完成程序功能的具体代码(必须) 
+
+--EXCEPTION 一旦发生异常,立刻跳转到异常处理部分(可选)
+--异常处理部分
+END;
+
+--第一个代码块
+--每一句独立代码完成之后必须加分号
+DECLARE
+  --变量 V_变量名 数据类型 := 值;
+  --声明变量的初始赋值 
+  V_A VARCHAR2(20) := '小明';
+  --外部向变量赋值 &提示符
+  V_B VARCHAR2(20) := '&输入姓名';
+  V_C NUMBER := &输入年龄;
+  V_D DATE := TO_DATE(&输入生日, 'YYYYMMDD');
+BEGIN
+  DBMS_OUTPUT.put_line('HELLO ' || V_A || &hhh);
+  --在执行部分对变量重新赋值 变量名  := 值;
+  V_A := '张三';
+  --输出语句 只能有一个参数,只能是字符串类型
+  DBMS_OUTPUT.put_line('HELLO ' || V_A || V_B);
+  DBMS_OUTPUT.put_line('年龄: ' || V_C || ' 生日: ' ||
+                       TO_CHAR(V_D, 'YYYYMMDD'));
+END;
+
+单引号 强引用 引号内特殊字符无特殊意义
+SELECT LENGTH('ENAME'),ENAME FROM EMP;
+
+双引号 弱引用 引号内特殊字符保留特殊意义
+SELECT LENGTH("ENAME"),ENAME FROM EMP;
+
+
+--4.通过查询语句向变量赋值
+--变量只能接收单行单列的数据
+
+--传入一个员工编号,输出他的员工姓名
+DECLARE
+  V_EMPNO NUMBER := &输入编号; --7788
+  V_ENAME VARCHAR2(20);
+  V_SAL NUMBER;
+BEGIN
+  -- SELECT 字段 FROM ==>>  SELECT 字段 INTO 变量 FROM 
+--INTO两边字段数量数据类型顺序必须保持一致
+--SQL查询结果不能为空
+  SELECT ENAME,SAL INTO V_ENAME,V_SAL FROM EMP WHERE EMPNO = V_EMPNO;
+  DBMS_OUTPUT.put_line(V_ENAME||V_SAL);
+END;
+
+--传入一个员工员工编号,输出他的岗位名称
+
+DECLARE
+  V_EMPNO NUMBER := &员工编号;
+  V_JOB   VARCHAR2(20);
+BEGIN
+  SELECT JOB INTO V_JOB FROM EMP WHERE EMPNO = V_EMPNO;
+  DBMS_OUTPUT.put_line(V_JOB);
+END;
+
+--传入一个部门编号,输出该员工所在部门的平均工资
+
+DECLARE
+  V_BM  NUMBER := &部门编号;
+  V_AVG NUMBER;
+BEGIN
+  SELECT AVG(SAL) INTO V_AVG FROM EMP WHERE DEPTNO = V_BM;
+  DBMS_OUTPUT.put_line(V_AVG);
+END;
+
+--传入一个员工编号,打印他所在的部门名称
+
+DECLARE
+  V_EMPNO NUMBER := &输入编号;
+  V_DNAME VARCHAR2(20);
+BEGIN
+  SELECT DNAME
+    INTO V_DNAME
+    FROM DEPT D
+    JOIN EMP E
+      ON E.DEPTNO = D.DEPTNO
+   WHERE EMPNO = V_EMPNO;
+  DBMS_OUTPUT.put_line(V_DNAME);
+END;
+
+--常量CONSTANT
+DECLARE
+  --C_常量名 CONSTANT 数据类型 := 初始赋值;
+  --常量必须被赋与初始赋值
+  C_A CONSTANT VARCHAR2(20) := '小灵';
+BEGIN
+  --常量不能被重新赋值
+  --C_A := '小李';
+  DBMS_OUTPUT.put_line(C_A);
+END;
+
+--传入一个半径,求出圆的面积和周长
+
+DECLARE
+  V_R NUMBER := &半径;
+  C_A CONSTANT NUMBER := 3.14;
+  V_A NUMBER;
+BEGIN
+  --面积
+  V_A := POWER(V_R, 2) * C_A;
+  DBMS_OUTPUT.put_line('面积: ' || V_A);
+  --周长
+  V_A := 2 * C_A * V_R;
+  DBMS_OUTPUT.put_line('周长: ' || V_A);
+END;
+
+--异常处理部分
+--系统的预定义异常：
+--数据库给某个错误赋予了错误的编号和错误的名字(21种)
+no_data_found   查询没有数据
+too_many_rows  查询数据太多
+value_error  赋值的错误
+zero_divide  除数为0
+......
+
+DECLARE
+  V_EMPNO NUMBER := &编号;
+  V_ENAME VARCHAR2(20);
+  V_SAL   NUMBER;
+BEGIN
+  SELECT ENAME INTO V_SAL FROM EMP WHERE EMPNO = V_EMPNO;
+  DBMS_OUTPUT.put_line(V_ENAME);
+EXCEPTION
+  --WHEN 异常名 THEN
+  WHEN NO_DATA_FOUND THEN
+    --SQLCODE 报错编号 SQLERRM报错信息
+    DBMS_OUTPUT.put_line(SQLERRM);
+  WHEN VALUE_ERROR THEN
+    DBMS_OUTPUT.put_line(SQLERRM);
+  WHEN TOO_MANY_ROWS THEN
+    DBMS_OUTPUT.put_line(SQLERRM);
+END;
+
+--OTHERS 包含所有异常情况
+--编译时期报错  运行时期报错(异常)
+DECLARE
+  V_EMPNO NUMBER := &编号;
+  V_ENAME VARCHAR2(20);
+  V_SAL   NUMBER;
+BEGIN
+  SELECT ENAME INTO V_SAL FROM EMP WHERE EMPNO = V_EMPNO;
+  DBMS_OUTPUT.put_line(V_ENAME);
+EXCEPTION
+  --WHEN 异常名 THEN
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.put_line(SQLERRM);
+END;
+
+--引用数据类型
+--%TYPE 引用某张表某个字段下的数据类型
+
+DECLARE
+  V_EMPNO EMP.EMPNO%TYPE := &输入编号; --NUMBER(4)
+  V_ENAME EMP.ENAME%TYPE;
+BEGIN
+  SELECT ENAME INTO V_ENAME FROM EMP WHERE EMPNO = V_EMPNO;
+  DBMS_OUTPUT.put_line(V_ENAME);
+END;
+
+
+
+--%ROWTYPE 引用某张表格所有字段的数据类型
+--引用的表有几个字段,相当于定义了几个变量
+DECLARE
+  --记录型变量不能在声明部分赋值
+  V_A EMP%ROWTYPE; --记录型变量
+
+BEGIN
+  --变量名.字段名
+  V_A.EMPNO := &员工编号; --7788
+  SELECT * INTO V_A FROM EMP WHERE EMPNO = V_A.EMPNO;
+  DBMS_OUTPUT.put_line(V_A.ENAME || V_A.SAL || V_A.JOB);
+END;
+
+
+
+

@@ -1,0 +1,417 @@
+--将scott用户里面，EMP1和DEPT1表中所有不够200长度的varchar2数据类型，
+--长度修改为200
+  表字段信息表：user_tab_columns(数据字典) 
+
+DECLARE
+  CURSOR C_A IS
+    SELECT TABLE_NAME, COLUMN_NAME
+      FROM USER_TAB_COLUMNS
+     WHERE TABLE_NAME IN ('EMP1', 'DEPT1')
+       AND DATA_TYPE = 'VARCHAR2'
+       AND DATA_LENGTH < 200;
+BEGIN
+  FOR I IN C_A LOOP
+    DBMS_OUTPUT.put_line(I.TABLE_NAME || I.COLUMN_NAME);
+    EXECUTE IMMEDIATE ' ALTER TABLE ' || I.TABLE_NAME || ' MODIFY ' ||
+                      I.COLUMN_NAME || ' VARCHAR2(200)';
+  END LOOP;
+END;
+
+
+  
+  表信息表：user_tables
+-- 将当前scott用户前五个表格，全部都备份一份出来
+--如果有一个emp表，将这个表复制一个新的表，名字为emp_20230418;   --(系统当前的年月日)
+--原表名 +  '_'  + 当前系统日期(年月日)
+SELECT * FROM USER_TABLES;--当前用户下所有表格信息 
+
+
+DECLARE
+  CURSOR C_A IS
+    SELECT TABLE_NAME FROM USER_TABLES WHERE ROWNUM < 6;
+BEGIN
+  FOR I IN C_A LOOP
+    DBMS_OUTPUT.put_line('CREATE TABLE ' || I.TABLE_NAME || '_' ||
+                         TO_CHAR(SYSDATE, 'YYYYMMDD') ||
+                         ' AS SELECT * FROM ' || I.TABLE_NAME);
+  END LOOP;
+END;
+
+---存储过程
+    存储过程是一个命名程序块，包括过程的名称，过程使用的参数以及过程执行的操作。
+    语法格式：创建存储过程
+      CREATE [OR REPLACE] PROCEDURE
+      过程名(参数1 [IN/OUT/IN OUT] 数据类型,参数2 [IN/OUT/IN OUT] 数据类型...)
+      IS/AS
+      PL/SQL过程体;
+      (1)OR REPLACE:表示如果存储过程已经存在，则替换已有的存储过程。
+      (2)IN 表示传入参数，不可以被赋值;OUT表示传出参数，可以被赋值;
+        IN OUT表示传入传出参数，可以传入值，可以被赋值，可以返回值。
+        如果这部分省略，默认表示传入参数，创建存储过程可以带参也可以不带参。
+      (3)IS/AS:在IS/AS后声明变量不要加DECLARE语句。
+      (4)参数的数据类型也是不能带长度。
+    命名规范：
+      存储过程命名规范:SP_目标表名
+      存储过程传入参数命名规范:P_参数名(P_START_DATE)
+      存储过程变量命名规范:V_变量名(V_END_DATE)
+
+--语法结构 PROCEDURE 
+CREATE OR REPLACE PROCEDURE SP_A IS
+  --IS / AS
+  --不能写DECLARE IS - BEGIN之间是声明部分
+  V_A NUMBER;
+BEGIN
+  DBMS_OUTPUT.put_line('HELLO 张三');
+END;
+
+--调用
+
+--CALL 存储过程名()小括号必须有;
+CALL SP_A();
+
+--代码块调用
+BEGIN
+--直接写存储过程名调用
+  SP_A;
+END;
+
+--在命令行调用
+EXECUTE 存储过程名;
+
+--删除存储过程
+DROP PROCEDURE SP_A;
+
+------存储过程的参数 IN 入参 OUT 出参 IN OUT 出入参数
+
+---入参 IN 默认入参
+--传入一个员工编号,输出他的员工姓名
+--P_参数名  参数类型  数据类型
+CREATE OR REPLACE PROCEDURE SP_A(P_EMPNO IN NUMBER) IS
+  V_ENAME VARCHAR2(20);
+BEGIN
+  SELECT ENAME INTO V_ENAME FROM EMP WHERE EMPNO = P_EMPNO;
+  DBMS_OUTPUT.put_line(V_ENAME);
+END;
+
+--调用
+BEGIN
+  SP_A(7654);
+END;
+
+--出参 OUT
+--存储过程向用户返回的结果
+--传入一个员工编号,返回他的员工姓名
+CREATE OR REPLACE PROCEDURE SP_A(P_EMPNO NUMBER, P_ENAME OUT VARCHAR2) IS
+BEGIN
+  --出参可以作为赋值目标使用,相当于变量,入参不可以
+  SELECT ENAME INTO P_ENAME FROM EMP WHERE EMPNO = P_EMPNO;
+END;
+
+--调用
+DECLARE
+  V_ENAME VARCHAR2(20);
+BEGIN
+  --出参需要有赋值目标接收 先入参后出参
+  --SP_A(7839,V_ENAME);
+  SP_A(P_EMPNO => 7788, P_ENAME => V_ENAME); --不需要考虑顺序
+  DBMS_OUTPUT.put_line(V_ENAME);
+END;
+
+
+--出入参数 IN OUT
+--可以当入参使用,可以当出参使用
+--传入一个员工编号,返回他的员工工资
+
+CREATE OR REPLACE PROCEDURE SP_A(P_A IN OUT NUMBER) IS
+
+BEGIN
+  SELECT SAL
+    INTO P_A /*出参*/
+    FROM EMP
+   WHERE EMPNO = P_A /*入参*/
+  ;
+END;
+
+
+--调用
+DECLARE
+  V_A NUMBER;
+BEGIN
+  V_A := 7788;
+  DBMS_OUTPUT.put_line('入参' || V_A);
+  SP_A(V_A);
+  DBMS_OUTPUT.put_line('出参' || V_A);
+END;
+
+
+--传入一个部门编号,输出该部门下的员工信息
+CREATE OR REPLACE PROCEDURE SP_A(P_BM IN NUMBER) IS
+  CURSOR C_A IS
+    SELECT * FROM EMP WHERE DEPTNO = P_BM;
+BEGIN
+  FOR I IN C_A LOOP
+    DBMS_OUTPUT.put_line(I.ENAME || I.DEPTNO);
+  END LOOP;
+END;
+
+--调用
+BEGIN
+  SP_A(20);
+END;
+
+
+--传入一个员工编号,返回他的员工姓名(用出入参数完成)
+
+CREATE OR REPLACE PROCEDURE SP_A(P_A IN OUT EMP%ROWTYPE) IS
+BEGIN
+  SELECT * INTO P_A /*出*/FROM EMP WHERE EMPNO = P_A.EMPNO/*入*/;
+END;
+
+--调用
+DECLARE
+V_A EMP%ROWTYPE;
+BEGIN
+  V_A.EMPNO := 7788;
+  SP_A(V_A);
+  DBMS_OUTPUT.put_line(V_A.ENAME||V_A.SAL);
+END;  
+
+
+--传入一个岗位修改该岗位下的姓名为张三 修改成功返回成功
+
+CREATE OR REPLACE PROCEDURE SP_A(P_JOB VARCHAR2) IS
+BEGIN
+  UPDATE EMP1 SET ENAME = '张三' WHERE JOB = P_JOB;
+  IF SQL%FOUND THEN
+    DBMS_OUTPUT.put_line('成功');
+  ELSE
+    DBMS_OUTPUT.put_line('失败');
+  END IF;
+END;
+
+--传入一个员工编号，就删除该员工信息
+CREATE OR REPLACE PROCEDURE SP_A(P_EMPNO NUMBER) IS
+BEGIN
+  DELETE FROM EMP1 WHERE EMPNO = P_EMPNO;
+  IF SQL%FOUND THEN
+    DBMS_OUTPUT.put_line('成功');
+  ELSE
+    DBMS_OUTPUT.put_line('失败');
+  END IF;
+END;
+
+--调用
+BEGIN
+  SP_A(77898);
+END;
+
+
+
+    小练习：
+      创建一个存储过程，输入参数为员工编号，
+      输出参数为输入员工所在部门名称和该部门平均工资，
+      要求在处理过程中使用EMP1表作为员工表：
+      1.若输入员工在ACCOUNTING部门，该员工职位为MANAGER，
+      则该部门全员涨薪1000，该员工为其他职位，则该部门全员涨薪800；
+      2.若输入员工在SALES部门，该员工职位为MANAGER，则该部门全员涨薪800，
+      该员工为其他职位，则该部门全员涨薪600；
+      3.若输入员工在其他部门，不管该员工什么职位，所在部门全员涨薪500；
+      4.将上述涨薪操作更新EMP1表；
+      5.平均工资为涨薪后平均工资。
+
+CREATE OR REPLACE PROCEDURE SP_A(P_EMPNO IN NUMBER,
+                                 P_DNAME OUT VARCHAR2,
+                                 P_AVG   OUT NUMBER) IS
+  V_JOB VARCHAR2(20);
+  V_BM  NUMBER;
+BEGIN
+  SELECT DNAME, JOB, E.DEPTNO
+    INTO P_DNAME, V_JOB, V_BM
+    FROM EMP E
+    JOIN DEPT D
+      ON E.DEPTNO = D.DEPTNO
+   WHERE EMPNO = P_EMPNO;
+  IF P_DNAME = 'ACCOUNTING' THEN
+    IF V_JOB = 'MANAGER' THEN
+      UPDATE EMP1 SET SAL = SAL + 1000 WHERE DEPTNO = V_BM;
+    ELSE
+      UPDATE EMP1 SET SAL = SAL + 800 WHERE DEPTNO = V_BM;
+    END IF;
+  ELSIF P_DNAME = 'SALES' THEN
+    IF V_JOB = 'MANAGER' THEN
+      UPDATE EMP1 SET SAL = SAL + 800 WHERE DEPTNO = V_BM;
+    ELSE
+      UPDATE EMP1 SET SAL = SAL + 600 WHERE DEPTNO = V_BM;
+    END IF;
+  ELSE
+    UPDATE EMP1 SET SAL = SAL + 500 WHERE DEPTNO = V_BM;
+  END IF;
+  SELECT AVG(SAL) INTO P_AVG FROM EMP1 WHERE DEPTNO = V_BM;
+END;
+
+--调用
+DECLARE
+  V_DNAME VARCHAR2(20);
+  V_AVG   NUMBER;
+BEGIN
+  --7782 ACCOUNTING MANAGER + 1000
+  SP_A(P_EMPNO => 7782, P_DNAME => V_DNAME, P_AVG => V_AVG);
+  DBMS_OUTPUT.put_line(V_DNAME || V_AVG);
+END;
+
+
+--数据同步
+
+--全量更新 清空目标表,将源数据全部新增至目标表
+目标表
+1   张三  19
+2   李四  20
+
+源数据
+1   张三  22
+2   李四  20
+3   王五  23
+
+
+--创建目标表和源数据表
+CREATE TABLE EMP_MB AS SELECT * FROM EMP;
+CREATE TABLE EMP_YB AS SELECT * FROM EMP;
+
+--修改新增源表数据
+SELECT * FROM EMP_YB FOR UPDATE;
+
+--创建全量更新存储过程
+CREATE OR REPLACE PROCEDURE SP_A IS
+BEGIN
+  --第一步 清空目标表 DELETE FROM EMP_MB;
+  EXECUTE IMMEDIATE ' TRUNCATE TABLE EMP_MB';
+  --第二不 将源表数据新增至目标表
+  INSERT INTO EMP_MB
+    SELECT Y.EMPNO,
+           Y.ENAME,
+           Y.JOB,
+           Y.MGR,
+           Y.HIREDATE,
+           Y.SAL,
+           Y.COMM,
+           Y.DEPTNO
+      FROM EMP_YB Y;
+END;
+
+--调用
+BEGIN
+  SP_A;
+END;
+
+SELECT * FROM EMP_MB;
+SELECT * FROM EMP_YB;
+
+--增量更新
+--通过唯一标识符判断该条数据在两表中是否存在
+--存在就更新,不存在就新增
+
+目标表
+1   张三  22
+2   李四  20
+3   王五  23
+
+源数据
+1   张三  22
+2   李四  20
+3   王五  23
+
+
+--MERGE INTO
+/*
+MERGE INTO 目标表名
+USING      (SELECT 子查询) 源表数据
+ON          (匹配条件)
+WHTN MATCHED THEN
+--存在就更新
+UPDATE 不写表名 SET 字段名 = 值 WHERE可写可不写
+WHEN NOT MATCHED THEN
+--不存在就新增
+INSERT (字段名.....) VALUES(值.....);
+*/
+
+CREATE OR REPLACE PROCEDURE SP_A(P_BM NUMBER) IS
+BEGIN
+  MERGE INTO EMP_MB M
+  USING (SELECT * FROM EMP_YB Y WHERE Y.DEPTNO = P_BM) Y
+  ON (M.EMPNO = Y.EMPNO)
+  WHEN MATCHED THEN
+    UPDATE
+       SET --M.EMPNO = Y.EMPNO,比较字段不能更新
+             M.ENAME = Y.ENAME,
+           M.JOB      = Y.JOB,
+           M.MGR      = Y.MGR,
+           M.HIREDATE = Y.HIREDATE,
+           M.SAL      = Y.SAL,
+           M.COMM     = Y.COMM,
+           M.DEPTNO   = Y.DEPTNO
+  WHEN NOT MATCHED THEN
+    INSERT
+      (M.EMPNO, M.ENAME, M.JOB, M.MGR, M.HIREDATE, M.SAL, M.COMM, M.DEPTNO)
+    VALUES
+      (Y.EMPNO, Y.ENAME, Y.JOB, Y.MGR, Y.HIREDATE, Y.SAL, Y.COMM, Y.DEPTNO);
+
+END;
+
+
+--调用
+BEGIN
+  SP_A(99);
+END;
+
+SELECT * FROM EMP_MB;
+SELECT * FROM EMP_YB;
+
+--游标
+
+CREATE OR REPLACE PROCEDURE SP_A(P_BM NUMBER) IS
+  CURSOR C_A IS
+    SELECT * FROM EMP_YB WHERE DEPTNO = P_BM;
+  V_C NUMBER;
+BEGIN
+  FOR I IN C_A LOOP
+    SELECT COUNT(1) INTO V_C FROM EMP_MB WHERE EMPNO = I.EMPNO;
+    IF V_C = 0 THEN
+      --不存在就新增
+      INSERT INTO EMP_MB
+      VALUES
+        (I.EMPNO,
+         I.ENAME,
+         I.JOB,
+         I.MGR,
+         I.HIREDATE,
+         I.SAL,
+         I.COMM,
+         I.DEPTNO);
+    ELSE
+      --存在就更新
+      UPDATE EMP_MB M
+         SET M.EMPNO    = I.EMPNO,
+             M.ENAME    = I.ENAME,
+             M.JOB      = I.JOB,
+             M.MGR      = I.MGR,
+             M.HIREDATE = I.HIREDATE,
+             M.SAL      = I.SAL,
+             M.COMM     = I.COMM,
+             M.DEPTNO   = I.DEPTNO
+       WHERE EMPNO = I.EMPNO;
+    END IF;
+  END LOOP;
+END;
+
+--调用
+BEGIN
+  SP_A(99);
+END;
+
+SELECT * FROM EMP_MB;
+SELECT * FROM EMP_YB;
+
+
+
+
+     
