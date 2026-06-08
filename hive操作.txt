@@ -1,0 +1,121 @@
+--四舍五入round
+select  round(1.666,2);
+
+--向上取整 ceil
+select ceil(1.1111) ;
+
+--向下取整 floor
+select floor(12.999);
+
+--生成0-1之间随机小数 rand()
+select rand() ;
+
+--生成1-10之间任意整数
+
+select round(rand()*10);
+
+--求字符长度 length
+select length('abcd');
+
+--反转字符串reverse
+select reverse('abcd') ;
+
+--拼接字符串concat
+select concat('aa','bb','bb');
+
+--以指定分隔符拼接字符串 concat_ws('分隔符','字符串1','字符串2')
+select concat_ws('-','张三','李四');
+
+--截取函数 substr(字符串,起始位置,长度) substring
+select substr('scott',1,1);
+
+--
+select substr('scott',2);
+
+--
+select substr('scott',-2,1);
+
+--替换函数 replace(字符串,旧的值,新的值)
+
+select replace('阿珍和小明','小明','阿强');
+
+--转大写upper(字符串)
+select upper('abcd');
+
+--转小写lower
+select lower('ABCD');
+
+--切割字符串函数split(字符串,分隔符) 返回数组类型
+
+select split('scott-3000','-');
+
+--------------日期函数
+--返回当前系统时间 current_date
+select current_date; 
+2026-06-06
+
+--返回当前系统时间(年月日时分秒) current_timestamp
+--返回毫秒
+select current_timestamp ;
+
+--获取日期中的月month('日期')
+
+select month('2026-06-07');
+
+--获取日期的天 day
+select day('2026-06-07');
+
+--获取小时hour
+select hour('2026-06-07 17:30:23');
+
+--获取两个日期相差的天数datediff(日期A,日期B)
+
+select datediff('2026-06-06','2025-06-06');
+
+--日期加天数 date_add(日期,数字)
+
+select date_add('2026-06-06',6);
+
+--日期减天数 date_sub(日期,数字)
+
+select date_sub('2026-06-06',6);
+
+--指定日期格式 date_format(日期,格式)
+
+select date_format('2026-11-07','yyyy年-MM月-dd日');
+
+--流程控制函数
+CASE ENAME WHEN  'SMITH' THEN 'AA' ELSE 'BB' END
+
+IF(条件表达式,成立返回值,不成立返回值)
+select if(1=1,'a','b') ;
+
+集合函数
+map 创建map集合  参数数量是偶数
+select map('语文','78','数学','87');
+
+map_keys获取map集合中的key值
+select MAP_KEYs(map('语文','78','数学','87'));
+
+map_values获取map集合中的value值
+select MAP_values(map('语文','78','数学','87'));
+
+--array 生成一个数组
+select array('张三','李四','王五');
+
+--sort_array 对数组内的值进行排序
+select sort_array(array('c','d','a'));
+
+--struct 生成一个struct集合数据类型
+select struct('18','19','20');
+
+--named_struct 可以声明struct类型的key值以及value值
+
+select named_struct('语文','78','数学','87');
+
+--聚合函数  sum avg max min count
+--collect_list
+select collect_list(字段名) from 表名 可以搭配GROUP BY 使用;
+
+--collect_set 就比COLLECT_LIST多了去重效果
+select collect_set(sal),deptno from emp group by deptno;

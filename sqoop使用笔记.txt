@@ -1,0 +1,171 @@
+sqoop   
+1.sqoop简介   不用启动在Hadoop里直接调用就行，不像hive还需要启动
+	sqoop是一款开源ETL工具，主要用于hadoop(hive)与传统数据库(mysql,postgresql,oracle...)之间进行数据的传递。
+2.sqoop操作
+	2.1导入：从非大数据集群向大数据集群中传输数据叫做导入
+		(1)全量导入HDFS
+			sqoop import \ --sqoop调用sqoop；import导入参数
+			--connect jdbc:mysql://192.168.5.100:3306/lee \ --connect使用jdbc连接关系型数据库；参数内容为jdbc连接的url
+			--username root \ --username 关系型数据库的登录用户名
+			--password root \ --password 关系型数据库的登录用户密码
+			--table t_chongzhi \ --table 需要导入的关系型数据库中的表
+			--fields-terminated-by "," \ --导入HDFS的文件分隔符
+			--target-dir /hongshan/tc \ --导入HDFS的目录
+			--delete-target-dir \ --HDFS中若存在目标目录则先删除该目录再新建并导入，若不存在则直接新建导入
+			--num-mappers 1 --指定sqoop使用map数量
+		(2)查询导入HDFS
+			sqoop import \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--fields-terminated-by "," \
+			--target-dir /hongshan/tc \
+			--delete-target-dir \
+			--num-mappers 1 \
+			--query 'select id,ename,amount,dt from t_chongzhi where id > 1000 and $CONDITIONS;' --query 在关系型数据库中查询数据源
+		(3)指定列导入HDFS
+			sqoop import \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--table t_chongzhi \
+			--fields-terminated-by "," \
+			--target-dir /hongshan/tc \
+			--delete-target-dir \
+			--num-mappers 1 \
+			--columns id,ename  --columns 筛选关系型数据库数据源的列
+		(4)关键字筛选查询导入HDFS
+			sqoop import \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--table t_chongzhi \
+			--fields-terminated-by "," \
+			--target-dir /hongshan/tc \
+			--delete-target-dir \
+			--num-mappers 1 \
+			--where "id>1003" --where 使用参数方法筛选关系型数据库数据源的行
+	2.2增量导入HDFS
+		(1)append
+			sqoop import \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--table t_chongzhi \
+			--fields-terminated-by "," \
+			--target-dir /hongshan/tc \
+			--num-mappers 1 \
+			--incremental append \ --incremental指定增量更新方式(append或lastmodified)
+			--check-column id \ --check-column指需要依据关系型数据库数据源的哪个字段进行更新
+			--last-value 1003 --last-value上次更新的最后一个值，本次更新需要大于该值。
+		(2)lastmodified
+			sqoop import \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--table t_chongzhi \
+			--fields-terminated-by "," \
+			--target-dir /hongshan/tc \
+			--num-mappers 1 \
+			--incremental lastmodified \ --incremental指定增量更新方式(append或lastmodified)
+			--check-column update_t \  --check-column指需要依据关系型数据库数据源的哪个字段进行更新
+			--last-value '2022-08-26 18:40:38.1' \ --last-value要比上次更新的最后一个值大，本次更新需要大于该值。
+			--append  --使用lastmodified方式需增加该参数。
+			
+			将lastmodified改为append方式实现：
+			sqoop import \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--table t_chongzhi \
+			--fields-terminated-by "," \
+			--target-dir /hongshan/tc \
+			--num-mappers 1 \
+			--incremental append \
+			--check-column update_t \
+			--last-value '2022-07-29 12:54:12.1'
+	2.3导入hive表的两种形式
+		(1)指定hive中表的HDFS路径来导入/user/hive/warehouse/test.db/t_chongzhi2/day=20220728
+			这里需要先建立该hive表的该分区，才能在hive中查询到数据
+			hive -e "alter table test.t_chongzhi2 add partition(day='20220728');"
+			sqoop import \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--table t_chongzhi \
+			--fields-terminated-by "," \
+			--target-dir /user/hive/warehouse/test.db/t_chongzhi2/day=20220728 \  --该路径为新创建的hive表的分区路径
+			--num-mappers 1 \
+			--incremental append \
+			--check-column update_t \
+			--last-value '2022-07-29 12:54:12.1'
+		(2)调用--hive参数直接向hive表中导入数据
+			sqoop import \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--table t_chongzhi \
+			--fields-terminated-by "," \
+			--num-mappers 1 \
+			--hive-import \  --指定向hive导入
+			--hive-table test.t_chongzhi2 \  --指定向hive中哪张表导入数据
+			--hive-partition-key day \ --指定hive表的分区字段
+			--hive-partition-value 20220727 \  --指定导入哪个分区
+			--incremental append \
+			--check-column update_t \
+			--last-value '2022-07-29 12:54:12.1'
+	2.4导出：从HDFS将数据导出至关系型数据库(MySQL)
+		2.4.1全量导出
+			sqoop export \ --sqoop调用sqoop；export导出参数
+			--connect jdbc:mysql://192.168.5.100:3306/lee \ --connect使用jdbc连接关系型数据库；参数内容为jdbc连接的url
+			--username root \
+			--password root \
+			--table t_chongzhi_export \  --table 需要导出到关系型数据库中的哪张表
+			--input-fields-terminated-by "," \
+			--export-dir /user/hive/warehouse/test.db/t_chongzhi2/day=20220728 --需要导出的HDFS上数据的目录
+		2.4.2--update-mode：updateonly(仅更新已有行),allowinsert(若该行已存在则更新，行不存在即插入，实际测试：均为插入)
+			1.updateonly仅更新已有行，不插入
+			sqoop export \
+			--connect jdbc:mysql://192.168.5.100:3306/lee \
+			--username root \
+			--password root \
+			--table t_chongzhi_export \
+			--input-fields-terminated-by "," \
+			--export-dir /user/hive/warehouse/test.db/t_chongzhi2/day=20220726 \
+			--update-key id \
+			--update-mode updateonly
+			updateonly验证步骤：
+				1.在MySQL数据库的名为lee的database中右键点击名为t_chongzhi的表==>复制==>仅结构，后改名为t_chongzhi_export；
+				2.导出(export)hive表t_chongzhi2的分区day='20220729'中的数据到MySQL中的t_chongzhi_export表；
+				3.在t_chongzhi中修改一条数据，并且新增一条数据；
+				4.将3中新增和修改的数据增量导入(append或者lastmodified)到hive表t_chongzhi2的分区day='20220726'中；
+				5.将hive表t_chongzhi2的分区day='20220726'数据导出(export使用updateonly)导出至MySQL表t_chongzhi_export中
+			2.allowinsert实际仅插入，不更新已有行
+				sqoop export \
+				--connect jdbc:mysql://192.168.5.100:3306/lee \
+				--username root \
+				--password root \
+				--table t_chongzhi_export \
+				--input-fields-terminated-by "," \
+				--export-dir /user/hive/warehouse/test.db/t_chongzhi2/day=20220726 \
+				--update-key id \
+				--update-mode allowinsert
+		2.4.3使用hcatalog工具从hive表导出至mysql
+			1.配置环境变量
+				编辑~/.bashrc文件，在文件末尾添加环境变量：
+				vim ~/.bashrc
+				export HCAT_HOME=/opt/module/apache-hive-2.1.1-bin/hcatalog
+				export PATH=$PATH:$HCAT_HOME/bin
+				使环境变量生效:
+				source ~/.bashrc
+			2.使用hcatalog
+				sqoop export \
+				--connect jdbc:mysql://192.168.5.100:3306/lee \
+				--username root \
+				--password root \
+				--table t_chongzhi_export \
+				--hcatalog-database test \
+				--hcatalog-table t_chongzhi2 \
+				--hcatalog-partition-keys day \
+				--hcatalog-partition-values 20220827
+				

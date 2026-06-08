@@ -1,0 +1,559 @@
+hive
+1.hive简介
+	hive：由Facebook开源用于解决海量结构化数据的统计工具。
+	hive是基于hadoop的一个数据仓库工具，可以将结构化的数据文件映射为一张表，并提供类SQL查询功能。
+2.hive本质：
+	hive的本质是将HQL(HiveSQL)转化成MapReduce程序。
+	hive处理的数据存储在HDFS
+	hive分析数据底层实现是MapReduce
+	执行程序运行在Yarn
+3.hive优缺点
+	3.1优点
+		1.操作接口采用类SQL语法，提供快速开发能力(简单，易上手)
+		2.避免去写MapReduce，减少开发人员的学习成本
+		3.hive优势在于处理大数据，对于处理小数据没有优势，因为hive执行延迟较高
+		4.hive支持用户自定义函数，用户可以根据自己的需求来实现自己的函数
+	3.2缺点
+		1.hive执行延迟高，因此常用于数据分析，对实时性要求不高的场合
+		2.hive的HQL表达能力有限
+4.hive与数据库比较
+	1.查询语言  insert into  insert overwrite SELECT * FROM EMP;
+		针对hive的特性设计了类SQL的查询语言，熟悉SQL的开发者可以方便的使用hive
+	2.数据更新
+		hive是针对数据仓库应用设计的，而数仓的内容读多写少，因此，hive中不建议对数据的改写，所有数据加载时确定好
+		而数据库中数据通常是需要修改，因此使用insert into添加数据，update修改数据
+	3.执行的延迟
+		hive查询时由于没有索引，需要扫描整个表，因此延迟较高。另一个导致hive延迟较高的因素是MapReduce。
+	4.数据规模
+		hive海量数据的支持，对应数据库处理数据量规模较小。
+5.hive操作
+	5.1hive启动
+		5.1.1 hive
+		5.1.2 cd /opt/module/apache-hive-2.1.1-bin/
+				bin/hive
+		5.2hive退出
+			5.2.1 exit;
+			5.2.2 quit;
+		5.3常用交互命令
+			-e 直接调用hivesql语句
+			hive -e "select * from test.emp;"
+			-f 调用文件中hivesql语句
+			vim hivef.sql
+			select * from test.emp;
+			hive -f /home/hadoop/123/hivef.sql > /home/hadoop/123/234/hivef.txt
+		5.4在hive交互窗口里查看HDFS文件系统
+			hive (default)> dfs -ls /;
+6.hive数据类型
+	基本数据类型：
+		TINYINT 1byte有符号整数  2的八次方
+		SMALLINT 2byte有符号整数 2的16次方
+		INT  4byte有符号整数  4294967296
+		BIGINT  8byte有符号整数
+		BOOLEAN  布尔类型，true或者false
+		FLOAT  单精度浮点数
+		DOUBLE  双精度浮点数
+		STRING  字符串
+		TIMESTAMP  时间类型
+		BINARY  字节数组 没人用
+	集合数据类型：
+		STRUCT
+		MAP  
+		ARRAY ["azhen","aqiang"]
+	数据类型实例演示：
+		show databases;
+		use test;
+		1.(hive)在hive中建表：使用"建表语句.txt"
+		2.(linux)vim test.txt 编辑测试数据
+			fulaoshi,lilaoshi_luolaoshi,xiaofu:6_xiaofufu:5,ruyilu_guangzhou
+			lilaoshi,fulaoshi_luolaoshi,xiaoli:7,ruyilu_guangzhou
+		3.(hive)导数据进入test.l_test表：load data local inpath '/home/hadoop/123/test.txt' into table l_test;
+		4.(hive)查看表数据：select * from l_test;
+	类型转化
+		隐式类型转换规则   10    4  1234567899  1234
+			1.任何整数类型都可以隐式转换为一个范围更广的类型，如TINYINT可以转换成INT，INT可以转换成BIGINT
+			2.所有整数类型，FLOAT和STRING(数字)类型都可以隐式转换成DOUBLE
+			3.TINYINT，SMALLINT，INT都可以转换成FLOAT
+			4.BOOLEAN类型不能转换成任何其他类型
+		显式转换   数据清洗时
+			cast('1' as int)
+			select '1'+2,cast('1' as int)+2;
+7.DDL数据定义  hive dll修改元数据的语言
+	7.1创建数据库
+		7.1.1 create database test_2;
+		7.1.2 create database if not exists test_2;
+		7.1.3 指定HDFS路径创建hive数据库：create database test_loc location '/test_loc.db';
+	7.2查看数据库
+		7.2.1 show databases;
+		7.2.2 show databases like 'tes*';
+		7.2.3 desc database test;
+		7.2.4 desc database extended test;
+	7.3 alter database test_2 set dbproperties('createtime'='20220725');
+	7.4删除数据库
+		7.4.1删除空数据库
+			drop database test_2;
+		7.4.2判断数据库是否存在然后执行删除
+			drop database if exists test_2;
+		7.4.3如果库不为空，强制删除
+			drop database test_loc cascade;
+	7.5使用数据库
+		use databasename；
+	7.6创建表
+		create table if not exists
+		external 外部表
+		comment 注释
+		partitioned by 分区
+		clustered by 分桶
+		sorted by 对桶中的数据排序*****
+		row format delimited fields terminated by ','  -----------指定列分隔符
+		collection items terminated by '_'             -----------指定MAP STRUCT ARRAY 的数据分隔符
+		map keys terminated by ':'                     -----------指定MAP中key和value的分隔符
+		lines terminated by '\n'                       -----------指定行分隔符
+		stored as 指定文件类型：textfile(文本),rcfile(列式存储格式文件),sequencefile(二进制序列文件)
+		location 指定表在HDFS上的存储位置
+		as 后跟查询语句，根据查询结果创建表
+		like 允许用户复制现有表的结构，但不复制数据
+		7.6.1管理表(内部表)
+			默认创建的表都是管理表(内部表)。hive会控制着数据的生命周期，当我们删除一个管理表(内部表)时，hive会删除这个表中的数据。
+			管理表不适合与其他工具共享数据。
+			(1)普通创建表
+				create table if not exists
+				hsstd (id int, name string)
+				row format delimited fields terminated by '\t'
+				stored as textfile
+				
+				load data local inpath '/home/hadoop/123/hsstd.txt' into table hsstd;
+			(2)根据查询结果创建表(查询的结果会添加到新创建的表中)
+				create table if not exists hsstd_2 as select id,name from hsstd where id<=8;
+			(3)根据已经存在的表结构创建表
+				create table if not exists hsstd_3 like hsstd;
+			(4)查看表的类型
+				desc formatted hsstd;
+		7.6.2外部表
+			因为表外部表，所以hive并非认为其完全拥有这份数据，删除该表并不会删掉这份数据，不过描述表的元数据会被删掉。
+			实例：
+				(1)创建外部表
+					create external table if not exists
+					dept_2 (deptno int,
+					dname string,
+					loc string)
+					row format delimited fields terminated by '\t';
+				(2)删除外部表
+					drop table dept_2;
+		7.6.3内外部表相互转换
+			内部表转外部表
+				alter table hsstd_2 set tblproperties('EXTERNAL'='TRUE');
+			外部表转内部表
+				alter table hsstd_2 set tblproperties('EXTERNAL'='FALSE');
+	7.7修改表
+		添加列
+		alter table hsstd_2 add columns (age int);
+		更新列
+		alter table hsstd_2 change column age age2 string;
+		替换列名
+		alter table hsstd_2 replace columns (id int, name2 string, age2 string);
+8.DML数据操作
+	8.1数据导入
+		8.1.1向表中装载数据load
+			load data：表示加载数据
+			local：表示从本地加载到hive表，否则从HDFS加载到hive
+			inpath:加载数据的路径
+
+			overwrite：覆盖表中已有数据，否则追加
+			into table：表示加载到哪张表
+
+			partition：表示上传到指定分区
+			实例：
+				加载本地数据到hive
+				load data local inpath '/home/hadoop/123/hsstd.txt' into table test.hsstd;
+				上传本地文件到HDFS
+				(hive)dfs -put /home/hadoop/123/hsstd.txt  /hongshan;
+				dfs 底层命令是在hive里面调用hadoop的文件操作 dfs=hadoop fs
+				(linux)hadoop fs -put /home/hadoop/123/hsstd.txt  /hongshan;
+				加载HDFS的文件到hive表中   剪切效果  源文件会消失
+				load data inpath '/hongshan/hsstd.txt' into table test.hsstd;
+				加载数据使用overwrite覆盖表中已有数据
+				load data local inpath '/home/hadoop/123/hsstd.txt' overwrite into table test.hsstd;
+		8.1.2通过查询语句向表中插入数据(insert)
+			insert into
+			insert into table hsstd values (11,'hs11'),(12,'hs12');
+			insert overwrite
+			insert overwrite table hsstd select id,name from hsstd where id<8;
+		8.1.3多表(多分区)插入模式
+			实例：
+			from hsstd
+			insert overwrite table hsstd_3
+			select id,name
+			insert overwrite table hsstd_4
+			select id,name where id<5;
+		8.1.4 import导入(空表或不存在的表)
+			只有export导出的表目录才能使用import
+			1.先export导出现有表
+				export table test.hsstd
+				to '/tmp/hsstd_dc2';
+			2.根据1中导出的目录，import导入新的表
+				import table hsstd_5
+				from '/tmp/hsstd_dc2';
+	8.2数据导出
+		8.2.1 insert导出
+			(1)将查询结果导出到Linux本地
+				insert overwrite local directory
+				'/home/hadoop/123/hsstd_dc3'
+				select * from hsstd;
+			(2)将查询结果格式化导出到Linux本地
+				insert overwrite local directory
+				'/home/hadoop/123/hsstd_dc4'
+				row format delimited fields terminated by '\t'
+				select * from hsstd;
+			(3)将查询结果导出到HDFS
+				insert overwrite directory
+				'/hongshan/hsstd_dc6'
+				row format delimited fields terminated by '\t'
+				select * from hsstd;
+		8.2.2export导出到HDFS上
+				export table test.hsstd
+				to '/tmp/hsstd_dc2';
+	8.3清除表中的数据(truncate)
+		注意：只能删除管理表中的数据，不能删除外部表中的数据
+			truncate table hsstd_5;
+9.查询
+	9.1基本查询
+		9.1.1全表查询
+			select * from hsstd;
+			select id,name from hsstd;
+		9.1.2特定列查询
+			select name from hsstd;
+		注意：
+			(1)大小写不敏感
+			(2)SQL可以写在一行或者多行
+			(3)关键字不能被缩写也不能分行
+			(4)各子句一般分行写
+			(5)使用缩进提高语句可读性
+		9.1.3列别名
+			select id as st_id,name from hsstd;
+		9.1.4算术运算符
+			+ - * / % & | ^ ~
+			select sal + 10000 from emp_2;
+		9.1.5常用聚合函数
+			count sum min max avg
+			select count(*) cnt from emp_2;
+		9.1.6where语句
+			select * from emp_2 where sal > 1000;
+		9.1.7比较运算符
+			A=B
+			A<=>B 如果A和B都为NULL则返回TRUE，如果一边为NULL返回FALSE
+			A<>B,A!=B
+			A<B
+			A<=B
+			A>B
+			A>=B
+			A NOT BETWEEN B AND C
+			A IS NOT NULL
+			A NOT IN (B,C)
+			select * from emp_2 where sal between 500 and 1000;
+			select * from emp_2 where mgr <=> comm;
+			select * from emp_2 where mgr is null and comm is null;
+		9.1.8 LIKE和RLIKE
+			RLIKE通过java实现正则表达式
+			select * from emp_2 where ename rlike '[A]';
+			select * from emp_2 where ename like '%A%';
+		9.1.9逻辑运算符
+			AND OR NOT
+			select * from emp_2 where sal > 1000 and deptno = 30;
+			select * from emp_2 where sal > 1000 or deptno = 30;
+			select * from emp_2 where deptno not in(20,30);
+	9.2分组
+		9.2.1 GROUP BY
+			select t.deptno,avg(t.sal) avg_sal from emp_2 t group by t.deptno;
+		9.2.2 HAVING
+			select t.deptno,avg(t.sal) avg_sal from emp_2 t group by t.deptno having avg(t.sal) > 2000;
+	9.3JOIN
+		9.3.1内连接
+			只有进行连接的两个表中都存在于连接条件相匹配的数据才会被保留下来。（取交集）
+			select e.empno,e.ename,d.deptno,d.dname from emp_2 e join dept_2 d on e.deptno=d.deptno;
+		9.3.2左外连接
+			JOIN操作符左边表中符合where子句的所有记录都会被返回。（左表为主表，驱动表。）
+			select e.empno,e.ename,d.deptno,d.dname from emp_2 e left join dept_2 d on e.deptno=d.deptno;
+		9.3.3右外连接
+			JOIN操作符右边表中符合where子句的所有记录都会被返回。（右表为主表，驱动表。）
+			select e.empno,e.ename,d.deptno,d.dname from dept_2 d right join emp_2 e on e.deptno=d.deptno;
+		9.3.4满外关联
+			将会返回所有表中符合where条件的所有记录，如果任一表的指定字段没符合条件的话，那么使用NULL替代。
+			select e.empno,e.ename,d.deptno,d.dname from emp_2 e full join dept_2 d on e.deptno=d.deptno;
+		9.3.5多表连接
+			select e.ename,d.dname,l.loc_name
+			from emp_2 e
+			join dept_3 d
+			on e.deptno=d.deptno
+			join location_2 l
+			on d.loc=l.id;
+		9.3.6笛卡尔积
+			在下面条件下产生
+				(1)省略连接条件
+				(2)连接条件无效
+				(3)所有表中的所有行相互连接
+			实例：
+				select e.empno,e.ename,d.deptno,d.dname from emp_2 e,dept_2 d;
+	9.4排序
+		9.4.1全局排序(order by)
+			order by:全局排序，只有一个reducer
+			(1)升序(默认)ASC
+			(2)降序 DESC
+			(3)可以使用字段别名排序，因为执行顺序在select之后
+			实例：
+				select * from emp_2 order by sal;
+				select ename,sal * 2 twosal from emp_2 order by twosal desc;
+		9.4.2每个reduce内部排序(sort by)
+			查看reduce数量：set mapreduce.job.reduces;
+			设置reduce数量：set mapreduce.job.reduces=3;
+			加载sort by结果到本地
+				insert overwrite local directory
+				'/home/hadoop/123/sortby-result'
+				row format delimited fields terminated by '\t'
+				select * from emp_2 sort by deptno desc;
+		9.4.3分区(distribute by)
+			在有些情况下，需要控制某个特定的行进入指定reducer，为了后续的操作，结合sort by使用
+			查看reduce数量：set mapreduce.job.reduces;
+			设置reduce数量：set mapreduce.job.reduces=3;
+				insert overwrite local directory
+				'/home/hadoop/123/sortby-result2'
+				row format delimited fields terminated by '\t'
+				select * from emp_2 distribute by deptno sort by empno desc;
+		9.4.4cluster by
+			当distribute by和sort by字段相同时，可以使用cluster by
+			查看reduce数量：set mapreduce.job.reduces;
+			设置reduce数量：set mapreduce.job.reduces=3;
+			实例：
+				insert overwrite local directory
+				'/home/hadoop/123/sortby-result3'
+				row format delimited fields terminated by '\t'
+				select * from emp_2 cluster by deptno;
+10.分区分桶
+	10.1分区
+		hive中分区就是分目录，把一个大的数据集根据业务分割成小的数据集，
+		在查询时通过where子句表达式选择查询所需的指定分区，这样查询效率更高。
+		10.1.1创建分区表
+			分区字段不能存在于表中，可以将分区字段视为伪列。
+			create table if not exists
+			dept_partition (id int,
+			deptno string,
+			dname string,
+			loc string)
+			partitioned by (day string)
+			row format delimited fields terminated by '\t' ;
+		10.1.2加载数据
+			load data local inpath
+			'/home/hadoop/123/dept_3.txt' into table dept_partition
+			partition(day='20220726');
+			load data local inpath
+			'/home/hadoop/123/dept_3.txt' into table dept_partition
+			partition(day='20220727');
+		10.1.3查看分区数据
+			(1)select * from dept_partition where day='20220727';
+			(2)select * from dept_partition where day='20220726'
+				union
+				select * from dept_partition where day='20220727';
+			(3)select * from dept_partition where day='20220726' or day='20220727';
+		10.1.4增加分区
+			增加单个分区
+			alter table dept_partition add partition(day='20220824');
+			增加多个分区
+			alter table dept_partition add partition(day='20220823') partition(day='20220822');
+		10.1.5删除分区
+			删除单个分区
+			alter table dept_partition drop partition(day='20220822');
+			删除多个分区
+			alter table dept_partition drop partition(day='20220823'),partition(day='20220824');
+		10.1.6查看分区表有多少个分区
+			show partitions dept_partition;
+		10.1.7查看分区表结构
+			desc formatted dept_partition;
+		10.1.8二级分区  分区之后再分区   分区目录下还有分区目录,二级目录下才是数据文件
+			10.1.8.1创建二级分区表
+				create table if not exists
+				dept_partition2 (id int,
+				deptno string,
+				dname string,
+				loc string)
+				partitioned by (day string, hour string)
+				row format delimited fields terminated by '\t' ;
+			10.1.8.2load data
+				load data local inpath
+				'/home/hadoop/123/dept_3.txt' into table dept_partition2
+				partition(day='20220727',hour='10');
+			10.1.8.3查询二级分区表
+				select * from dept_partition2 where day='20220727' and hour='10';
+		10.1.9动态分区
+			关系型数据库中，对分区表insert数据时，数据库会自动根据分区字段的值，将数据插入相应的分区中，
+			hive中也提供了类似的机制，即动态分区(Dynamic Partition)，使用hive动态分区需要进行相应设置。
+			(1)开启动态分区功能(默认true，开启)
+				查看set hive.exec.dynamic.partition;
+			(2)设置为非严格模式(默认strict，表示必须指定至少一个分区为静态分区，
+			nonstrict模式表示允许所有的分区字段都可以使用动态分区)
+				set hive.exec.dynamic.partition.mode=nonstrict;
+			(3)在所有执行MR的节点上，最大一共可以创建多少个动态分区。默认1000.
+				查看set hive.exec.max.dynamic.partitions;   --加=则表示赋值
+			(4)在每个执行MR的节点上，最大可以创建多少个动态分区。默认100.
+				查看set hive.exec.max.dynamic.partitions.pernode;
+			(5)整个MR job中，最大可以创建多少个HDFS文件，默认100000
+				查看set hive.exec.max.created.files;
+			(6)当有空分区生成时，是否抛出异常，一般不需要设置。默认false。
+				查看set hive.error.on.empty.partition;
+			实例：
+				(1)建分区表：
+					create table if not exists
+					dept_partition_dy (id int,
+					deptno string,
+					dname string)
+					partitioned by (loc string)
+					row format delimited fields terminated by '\t' ;
+				(2)插入动态分区
+					insert into table dept_partition_dy partition(loc)
+					select id,deptno,dname,loc from dept_partition;
+				(3)查看目标分区表的分区情况
+					show partitions dept_partition_dy;
+	10.2分桶
+		分桶是将数据集分解成更容易管理的若干部分的另一个技术。
+		分区针对的是数据的存储路径，分桶针对的是数据文件。
+		10.2.1创建分桶表
+			create table if not exists
+			stu_buck (id int,
+			name string)
+			clustered by (id)
+			into 4 buckets
+			row format delimited fields terminated by '\t' ;
+		10.2.2设置reduce数量：set mapreduce.job.reduces=-1;
+		10.2.3加载数据
+			load data local inpath
+			'/home/hadoop/123/hsstd.txt' into table stu_buck;
+		10.2.4查看分桶表结构
+			desc formatted stu_buck;
+		10.2.5查询分桶表数据
+			select * from stu_buck;
+		注意事项：
+			1.reduce的个数设置为-1，让job自行决定有多少个reduce
+				set mapreduce.job.reduces=-1;
+			2.load数据时确定文件路径，避免找不到文件的问题
+			3.不要使用本地模式
+				查看set hive.exec.mode.local.auto;
+11.函数
+	11.1系统内置函数
+		(1)查看系统自带函数
+			show functions;
+		(2)显示自带函数用法
+			desc function upper;
+			desc function extended upper;
+	11.2行转列
+		concat(stringA,stringB):返回输入字符串连接后的结果，支持任意个输入字符串
+		concat_ws($eparator,str1,str2):是特殊形式的concat()，第一个参数是所有字符串的分隔符
+		collect_set(col):函数只接受基本数据类型，作用主要将某字段的值进行去重汇总，产生array类型字段
+		1.原数据形式:
+		fulaoshi	白羊座	A
+		lilaoshi	处女座	A
+		chenlaoshi	白羊座	B
+		luolaoshi	白羊座	A
+		azhen	处女座	A
+		aqiang	白羊座	B
+		2.需求数据形式：
+		白羊座,A	fulaoshi|luolaoshi
+		白羊座,B	chenlaoshi|aqiang
+		处女座,A	lilaoshi|azhen
+		3.建表语句：
+		create table if not exists
+		hstc (name string,
+		constellation string,
+		blood_type string)
+		row format delimited fields terminated by '\t' ;
+		4.load data：
+		load data local inpath
+		'/home/hadoop/123/hstc.txt' into table hstc;
+		5.HQL语句：
+		select t1.c_b,concat_ws('|',collect_set(t1.name)) name_lt
+		from
+		(select name,concat_ws(',',constellation,blood_type) c_b from hstc) t1
+		group by t1.c_b;
+	11.3列转行
+		explode(col):将hive中一列复杂的array或者map结构拆分成多行
+		lateral view
+			用法：lateral view udtf(expression) tableAlias AS columnAlias
+			解释：用于和split explode等UDTF函数一起使用，它能将一列数据拆成多行数据，在此基础上可以对拆分后的数据进行聚合
+		1.原数据形式
+		教父	黑帮,警匪,心理,剧情
+		侏罗纪公园	动作,科幻,剧情,灾难
+		战狼	战争,动作,灾难
+		2.需求形式：
+		教父	黑帮
+		教父	警匪
+		教父	心理
+		教父	剧情
+		侏罗纪公园	动作
+		侏罗纪公园	科幻
+		侏罗纪公园	剧情
+		侏罗纪公园	灾难
+		战狼	战争
+		战狼	动作
+		战狼	灾难
+		3.建表语句
+		create table if not exists
+		movie_info (movie string,
+		category string)
+		row format delimited fields terminated by '\t' ;
+		4.load data
+		load data local inpath
+		'/home/hadoop/123/movie.txt' into table movie_info;
+		5.HQL语句：
+		select movie,category_name
+		from movie_info
+		lateral view
+		explode(split(category,',')) movie_info_tmp as category_name;
+	11.4自定义函数
+		UDF(user defined function)
+			一进一出
+		UDAF(user defined aggregation function)
+			聚集函数，多进一出
+		UDTF(user defined table-generating function)
+			一进多出
+	11.5开窗函数
+		11.5.1开窗函数基本使用
+		OVER():指定分析函数工作的数据窗口大小，这个数据窗口大小可能会随着行的变化而变化
+		CURRENT ROW:当前行
+		n PRECEDING:往前n行
+		n FOLLOWING:往后n行
+		UNBOUNDED:起点
+		UNBOUNDED PRECEDING：表示从前面的起点
+		UNBOUNDED FOLLOWING：表示从后面的起点
+		LAG(col,n,default_value):往前第n行数据
+		LEAD(col,n,default_value):往后第n行数据
+		NTILE(n):把有序窗口的行分发到指定数据的组中，各个组有编号，编号从1开始，对于每一行，NTILE返回此行所属的组的编号。
+		需求：
+			1.查询在2022年4月购买过的客户及总人数；
+			select name,count(*) over()
+			from business
+			where substring(orderdate,1,7)='2022-04'
+			group by name;
+			2.查询客户的购买明细及月购买总额；
+			select name,orderdate,cost,sum(cost) over(partition by month(orderdate)) from business;
+			3.上述的场景，每个客户的cost按照日期进行累加；
+			select name,orderdate,cost,
+			sum(cost) over() as s1, --所有行相加
+			sum(cost) over(partition by name) as s2, --按name分组，组内数据相加
+			sum(cost) over(partition by name order by orderdate) as s3, --按name分组，组内数据累加
+			sum(cost) over(partition by name order by orderdate rows between UNBOUNDED PRECEDING and CURRENT ROW) as s4, --和s3效果相同个，由起点到当前行聚合
+			sum(cost) over(partition by name order by orderdate rows between 1 PRECEDING and CURRENT ROW) as s5, --当前行和前1行进行聚合
+			sum(cost) over(partition by name order by orderdate rows between 1 PRECEDING and 1 FOLLOWING) as s6, --当前行，前一行及后一行聚合
+			sum(cost) over(partition by name order by orderdate rows between CURRENT ROW and UNBOUNDED FOLLOWING) as s7 --当前行及后面所有行聚合
+			from business;
+			4.查询每个客户上次的购买时间；
+			select name,orderdate,cost,
+			lag(orderdate,1,'1970-01-01') over(partition by name order by orderdate) as t1,
+			lag(orderdate,2) over(partition by name order by orderdate) as t2
+			from business;
+		11.5.2RANK
+			RANK():排序相同时会重复，总数不变
+			DENSE_RANK():排序相同时会重复，总数会减少
+			ROW_NUMBER():会根据顺序计算
+				select name,subject,score,
+				rank() over(partition by subject order by score desc) rk,
+				dense_rank() over(partition by subject order by score desc) de_rk,
+				row_number() over(partition by subject order by score desc) row_rk
+				from score;
+	

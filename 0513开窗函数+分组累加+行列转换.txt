@@ -127,7 +127,7 @@ SELECT SID, AVG(SSCORE) FROM SCORE GROUP BY SID HAVING AVG(SSCORE) > 60;
 
 --行列转换
 
---列转行
+--行转列
 Y      Q1   Q2    Q3    Q4
 2015  100   110   140   100
 2016  200   150   100   300
@@ -172,7 +172,7 @@ SELECT * FROM TEST_TABLE
 PIVOT(SUM(AMT) FOR Q IN(1 AS Q1,2 AS Q2,3 AS Q3,4 AS Q4));
 
 
---行转列
+--列转行
 Y      Q1   Q2    Q3    Q4
 2015  100   110   140   100
 2016  200   150   100   300
@@ -240,6 +240,11 @@ SELECT NAME,GREATEST(语文,数学,英语) FROM SCORE_1;
 
 --LEAST(参数...)在一行之中获取最小值
 SELECT LEAST(10,20,30,40,8) FROM DUAL;
+
+
+多行变一行，用聚合（MAX/MIN）
+一行多列比大小，用 GREATEST/LEAST
+
 
 --数据类型
 NUMBER  数字类型 

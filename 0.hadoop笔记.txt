@@ -1,0 +1,108 @@
+hadoop
+1.hadoop概述
+	Hadoop是一个由Apache基金会所开发的分布式系统基础架构。
+	主要解决，海量数据的存储和海量数据的分析计算问题。
+	广义上来说，Hadoop通常是指一个更广泛的概念————Hadoop生态圈。
+2.Hadoop三大发行版本
+	Cloudera对应产品CDH。
+	Hortonworks对应产品HDP。
+	Hortonworks被Cloudera收购，推出新产品CDP。
+3.Hadoop优势（4高）
+	3.1高可靠性
+		Hadoop底层维护多个数据副本，所以即使Hadoop某个计算元素或存储出现故障，也不会导致数据的丢失。
+	3.2高扩展性
+		在集群间分布任务数据，可方便的扩展数以千计的节点。
+	3.3高效性
+		在MapReduce的思想下，Hadoop是并行工作的，以加快任务处理速度。
+	3.4高容错性
+		能自动将失败的任务重新分配。
+4.Hadoop组成
+	1.HDFS:hadoop distributed file system分布式文件存储系统
+		1.1NameNode(nn)：存储文件的元数据，如文件名，文件目录结构，文件属性（生成时间，副本数，文件权限），以及每个文件的块列表和所在的DataNode等。
+		1.2DataNode(dn):在本地文件系统存储文件数据块。
+		1.3Secondary NameNode(2nn):定时备份namenode数据。
+	2.MapReduce：负责计算
+		Map：并行处理输入数据
+		Reduce：对map阶段的数据进行汇总
+	3.Yarn：资源调度
+		3.1ResourceManager(RM):这个集群资源(CPU,内存)管理者
+		3.2NodeManager(NM):单个节点资源管理者
+		3.3ApplicationMaster(AM):单个任务运行的管理者
+		3.4Contanier:容器，相当于一台独立的服务器，里面封装了任务运行所需的资源，如内存，CPU，磁盘网络等
+5.hadoop启动
+	1.
+		cd /opt/module/hadoop-3.3.0/sbin/
+		./start-all.sh
+	2.
+		jps
+		应该显示内容：
+		NameNode
+		SecondaryNameNode
+		DataNode
+		ResourceManager
+		NodeManager
+	3.如果缺少了namenode
+		rm -rf /tmp/hadoop-hadoop/dfs/name/*
+		hadoop namenode -format
+		cd /opt/module/hadoop-3.3.0/sbin/
+		./stop-all.sh
+		./start-all.sh
+		jps
+	4.如果缺少了datanode
+		rm -rf /tmp/hadoop-hadoop/dfs/data/*
+		hadoop datanode -format
+		./stop-all.sh
+		./start-all.sh
+		jps
+6.HDFS命令操作
+	hadoop fs
+	hdfs dfs
+	1.上传
+		1.创建目录
+			hadoop fs -mkdir /hongshan
+		2.从本地剪切到HDFS
+			hadoop fs -moveFromLocal ./tash.sh /hongshan
+		3.从本地复制到HDFS
+			3.1 hadoop fs -copyFromLocal ./test.sh /hongshan
+			3.2 hadoop fs -put ./test.tar.gz /hongshan
+		4.追加一个本地文件到HDFS已经存在的文件的末尾
+			hadoop fs -appendToFile ./test.sh /hongshan/tash.sh
+	2.下载：从HDFS复制到本地
+		1. -copyToLocal
+		hadoop fs -copyToLocal /hongshan/test.sh ./
+		2. -get
+		hadoop fs -get /hongshan/test.tar.gz ./
+	3.直接操作HDFS
+		3.1创建目录
+		-mkdir
+			hadoop fs -mkdir /hongshan623
+		3.2显示目录信息
+			-ls
+			hadoop fs -ls /hongshan
+		3.3查看文件内容
+			-cat
+			hadoop fs -cat /hongshan/test.sh
+		3.4复制
+			-cp
+			hadoop fs -cp /hongshan/test.sh /hongshan623
+		3.5剪切
+			-mv
+			hadoop fs -mv /hongshan/task.sh /hongshan623
+		3.6更改权限
+			3.6.1 chmod
+				hadoop fs -chmod 777 /hongshan623/task.sh
+			3.6.2 chown
+				hadoop fs -chown root:supergroup /hongshan623/task.sh
+		3.7删除
+			-rm -r
+			hadoop fs -rm -r /hongshan623
+		3.8显示文件最后1KB的内容
+			-tail
+			hadoop fs -tail /hongshan/test.sh
+		3.9统计文件夹的大小
+			-du -h
+			hadoop fs -du -h /hongshan
+		3.10设置HDFS中文件的副本数
+			-setrep
+			hadoop fs -setrep 3 /hongshan/test.sh
+		

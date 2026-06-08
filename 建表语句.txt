@@ -1,0 +1,442 @@
+create table
+l_test ( name string,
+friends array<string>,
+children map<string, int>,
+address struct<street:string, city:string>
+)
+row format delimited fields terminated by ','
+collection items terminated by '_'
+map keys terminated by ':'
+lines terminated by '\n';
+
+row format delimited fields terminated by ','  -----------指定列分隔符
+collection items terminated by '_'             -----------指定MAP STRUCT ARRAY 的数据分隔符
+map keys terminated by ':'                     -----------指定MAP中key和value的分隔符
+lines terminated by '\n'                       -----------指定行分隔符
+
+fulaoshi,lilaoshi_luolaoshi,xiaofu:6_xiaofufu:5,ruyilu_guangzhou
+lilaoshi,fulaoshi_luolaoshi,xiaoli:7,ruyilu_guangzhou
+
+
+
+create table if not exists
+hsstd (id int, name string)
+row format delimited fields terminated by '\t'
+stored as textfile;
+
+vim hsstd.txt
+
+1       hs001
+2       hs002
+3       hs003
+4       hs004
+5       hs005
+6       hs006
+7       xiaoqiang
+8       xiaomei
+9       azhen
+10      aqiang
+
+create external table if not exists
+dept_2 (deptno int,
+dname string,
+loc string)
+row format delimited fields terminated by '\t';
+
+vim dept_2.txt
+
+1	10	ACCOUNTING	NEW YORK
+2	20	RESEARCH	DALLAS
+3	30	SALES	CHICAGO
+4	40	OPERATIONS	BOSTON
+
+
+load data local inpath '/home/hadoop/123/dept_2.txt' into table dept_2;
+
+
+create table if not exists
+hsstd_3 (id int, name string)
+row format delimited fields terminated by '\t'
+stored as textfile;
+
+create table if not exists
+hsstd_4 (id int, name string)
+row format delimited fields terminated by '\t'
+stored as textfile;
+
+from hsstd
+insert overwrite table hsstd_3
+select id,name
+insert overwrite table hsstd_4
+select id,name where id<5;
+
+export table test.hsstd
+to '/tmp/hsstd_dc2';
+
+import table hsstd_5
+from '/tmp/hsstd_dc2';
+
+insert overwrite local directory
+'/home/hadoop/123/hsstd_dc3'
+select * from hsstd;
+
+insert overwrite local directory
+'/home/hadoop/123/hsstd_dc4'
+row format delimited fields terminated by '\t'
+select * from hsstd;
+
+insert overwrite directory
+'/hongshan/hsstd_dc6'
+row format delimited fields terminated by '\t'
+select * from hsstd;
+
+
+create table if not exists
+emp (
+empno string,
+ename string,
+job string,
+mgr string,
+hiredate string,
+sal double,
+comm double,
+deptno string)
+row format delimited fields terminated by '\t' ;
+
+1	7369	SMITH	CLERK	7902	1980/12/17	800.00		20
+2	7499	ALLEN	SALESMAN	7698	1981/2/20	1600.00	300.00	30
+3	7521	WARD	SALESMAN	7698	1981/2/22	1250.00	500.00	30
+4	7566	JONES	MANAGER	7839	1981/4/2	2975.00		20
+5	7654	MARTIN	SALESMAN	7698	1981/9/28	1250.00	1400.00	30
+6	7698	BLAKE	MANAGER	7839	1981/5/1	2850.00		30
+7	7782	CLARK	MANAGER	7839	1981/6/9	2450.00		10
+8	7788	SCOTT	ANALYST	7566	1987/4/19	3000.00		20
+9	7839	KING	PRESIDENT		1981/11/17	5000.00		10
+10	7844	TURNER	SALESMAN	7698	1981/9/8	1500.00	0.00	30
+11	7876	ADAMS	CLERK	7788	1987/5/23	1100.00		20
+12	7900	JAMES	CLERK	7698	1981/12/3	950.00		30
+13	7902	FORD	ANALYST	7566	1981/12/3	3000.00		20
+14	7934	MILLER	CLERK	7782	1982/1/23	1300.00		10
+
+create table if not exists
+emp_2 (id int,
+empno string,
+ename string,
+job string,
+mgr string,
+hiredate string,
+sal double,
+comm double,
+deptno string)
+row format delimited fields terminated by '\t' ;
+
+load data local inpath '/home/hadoop/123/emp.txt' into table emp_2;
+
+create table if not exists
+dept_2 (id int,
+deptno string,
+dname string,
+loc string)
+row format delimited fields terminated by '\t' ;
+
+load data local inpath '/home/hadoop/123/dept.txt' into table dept_2;
+
+
+create table if not exists
+dept_3 (id int,
+deptno string,
+dname string,
+loc string)
+row format delimited fields terminated by '\t' ;
+
+load data local inpath '/home/hadoop/123/dept_3.txt' into table dept_3;
+
+1	10	ACCOUNTING	1
+2	20	RESEARCH	2
+3	30	SALES	3
+4	40	OPERATIONS	4
+
+
+create table if not exists
+location_2 (id string,
+loc_name string)
+row format delimited fields terminated by '\t' ;
+
+load data local inpath '/home/hadoop/123/location.txt' into table location_2;
+
+1	NEW YORK
+2	DALLAS
+3	CHICAGO
+4	BOSTON
+
+select e.ename,d.dname,l.loc_name
+from emp_2 e
+join dept_3 d
+on e.deptno=d.deptno
+join location_2 l
+on d.loc=l.id;
+
+
+insert overwrite local directory
+'/home/hadoop/123/sortby-result'
+row format delimited fields terminated by '\t'
+select * from emp_2 sort by deptno desc;
+
+insert overwrite local directory
+'/home/hadoop/123/sortby-result2'
+row format delimited fields terminated by '\t'
+select * from emp_2 distribute by deptno sort by empno desc;
+
+insert overwrite local directory
+'/home/hadoop/123/sortby-result3'
+row format delimited fields terminated by '\t'
+select * from emp_2 cluster by deptno;
+
+create table if not exists
+dept_partition (id int,
+deptno string,
+dname string,
+loc string)
+partitioned by (day string)
+row format delimited fields terminated by '\t';
+
+load data local inpath
+'/home/hadoop/123/dept_3.txt' into table dept_partition
+partition(day='20220825');
+
+select * from dept_partition where day='20220826'
+union
+select * from dept_partition where day='20220825';
+
+select * from dept_partition where day='20220826' or day='20220825';
+
+
+create table if not exists
+dept_partition2 (id int,
+deptno string,
+dname string,
+loc string)
+partitioned by (day string, hour string)
+row format delimited fields terminated by '\t';
+
+load data local inpath
+'/home/hadoop/123/dept_3.txt' into table dept_partition2
+partition(day='20220827',hour='12');
+
+
+create table if not exists
+dept_partition_dy (id int,
+deptno string,
+dname string)
+partitioned by (loc string)
+row format delimited fields terminated by '\t';
+
+insert into table dept_partition_dy partition(loc)
+select id,deptno,dname,loc from dept_partition;
+
+insert into table dept_partition_dy partition(loc='test')
+select id,deptno,dname from dept_partition;
+
+create table if not exists
+stu_buck (id int,
+name string)
+clustered by (id)
+into 4 buckets
+row format delimited fields terminated by '\t';
+
+load data local inpath
+'/home/hadoop/123/hsstd.txt' into table stu_buck;
+
+原形式：
+fulaoshi	白羊座	A
+lilaoshi	处女座	A
+chenlaoshi	白羊座	B
+luolaoshi	白羊座	A
+azhen	处女座	A
+aqiang	白羊座	B
+
+需求形式：
+白羊座,A	fulaoshi|luolaoshi
+白羊座,B	chenlaoshi|aqiang
+处女座,A	lilaoshi|azhen
+
+create table if not exists
+hstc (name string,
+constellation string,
+blood_type string)
+row format delimited fields terminated by '\t';
+
+load data local inpath
+'/home/hadoop/123/hstc.txt' into table hstc;
+
+select t1.c_b,concat_ws('|',collect_set(t1.name)) name_lt
+from
+(select name,concat_ws(',',constellation,blood_type) c_b from hstc) t1
+group by t1.c_b;
+
+t1
+name        c_b
+fulaoshi	白羊座,A
+lilaoshi	处女座,A
+chenlaoshi	白羊座,B
+luolaoshi	白羊座,A
+azhen	处女座,A
+aqiang	白羊座,B
+
+原形式：
+教父	黑帮,警匪,心理,剧情
+侏罗纪公园	动作,科幻,剧情,灾难
+战狼	战争,动作,灾难
+
+需求形式：
+教父	黑帮
+教父	警匪
+教父	心理
+教父	剧情
+侏罗纪公园	动作
+侏罗纪公园	科幻
+侏罗纪公园	剧情
+侏罗纪公园	灾难
+战狼	战争
+战狼	动作
+战狼	灾难
+
+create table if not exists
+movie_info (movie string,
+category string)
+row format delimited fields terminated by '\t';
+
+load data local inpath
+'/home/hadoop/123/movie.txt' into table movie_info;
+
+
+select movie,category_name
+from movie_info
+lateral view
+explode(split(category,',')) movie_info_tmp as category_name;
+
+
+开窗函数联系数据：
+fulaoshi	2022-01-01	10
+lilaoshi	2022-01-02	15
+fulaoshi	2022-02-01	20
+lilaoshi	2022-01-04	13
+fulaoshi	2022-01-05	15
+fulaoshi	2022-04-05	25
+lilaoshi	2022-03-06	66
+chenlaoshi	2022-04-08	12
+chenlaoshi	2022-04-09	17
+fulaoshi	2022-05-06	80
+chenlaoshi	2022-04-11	10
+azhen	2022-06-18	100
+azhen	2022-05-10	16
+chenlaoshi	2022-04-13	95
+
+建表语句
+create table if not exists
+business (name string,
+orderdate string,
+cost int)
+row format delimited fields terminated by '\t';
+
+load data local inpath
+'/home/hadoop/123/business.txt' into table business;
+
+select name,count(*) over()
+from business
+where substring(orderdate,1,7)='2022-04'
+group by name;
+
+select name,orderdate,cost,sum(cost) over(partition by month(orderdate)) from business;
+
+select name,orderdate,cost,
+sum(cost) over() as s1, --所有行相加
+sum(cost) over(partition by name) as s2, --按name分组，组内数据相加
+sum(cost) over(partition by name order by orderdate) as s3, --按name分组，组内数据累加
+sum(cost) over(partition by name order by orderdate rows between UNBOUNDED PRECEDING and CURRENT ROW) as s4, --和s3效果相同个，由起点到当前行聚合
+sum(cost) over(partition by name order by orderdate rows between 1 PRECEDING and CURRENT ROW) as s5, --当前行和前1行进行聚合
+sum(cost) over(partition by name order by orderdate rows between 1 PRECEDING and 1 FOLLOWING) as s6, --当前行，前一行及后一行聚合
+sum(cost) over(partition by name order by orderdate rows between CURRENT ROW and UNBOUNDED FOLLOWING) as s7 --当前行及后面所有行聚合
+from business;
+
+name		orderdate	cost	s1	s2	s3	s4	s5	s6	s7
+azhen		2022-05-10	16		494	116	16	16	16	116	116
+azhen		2022-06-18	100		494	116	116	116	116	116	100
+chenlaoshi	2022-04-08	12		494	134	12	12	12	29	134
+chenlaoshi	2022-04-09	17		494	134	29	29	29	39	122
+chenlaoshi	2022-04-11	10		494	134	39	39	27	122	105
+chenlaoshi	2022-04-13	95		494	134	134	134	105	105	95
+fulaoshi	2022-01-01	10		494	150	10	10	10	25	150
+fulaoshi	2022-01-05	15		494	150	25	25	25	45	140
+fulaoshi	2022-02-01	20		494	150	45	45	35	60	125
+fulaoshi	2022-04-05	25		494	150	70	70	45	125	105
+fulaoshi	2022-05-06	80		494	150	150	150	105	105	80
+lilaoshi	2022-01-02	15		494	94	15	15	15	28	94
+lilaoshi	2022-01-04	13		494	94	28	28	28	94	79
+lilaoshi	2022-03-06	66		494	94	94	94	79	79	66
+
+select name,orderdate,cost,
+lag(orderdate,1,'1970-01-01') over(partition by name order by orderdate) as t1,
+lag(orderdate,2) over(partition by name order by orderdate) as t2
+from business;
+
+name		orderdate	cost	t1			t2
+azhen		2022-05-10	16		1970-01-01	NULL
+azhen		2022-06-18	100		2022-05-10	NULL
+chenlaoshi	2022-04-08	12		1970-01-01	NULL
+chenlaoshi	2022-04-09	17		2022-04-08	NULL
+chenlaoshi	2022-04-11	10		2022-04-09	2022-04-08
+chenlaoshi	2022-04-13	95		2022-04-11	2022-04-09
+fulaoshi	2022-01-01	10		1970-01-01	NULL
+fulaoshi	2022-01-05	15		2022-01-01	NULL
+fulaoshi	2022-02-01	20		2022-01-05	2022-01-01
+fulaoshi	2022-04-05	25		2022-02-01	2022-01-05
+fulaoshi	2022-05-06	80		2022-04-05	2022-02-01
+lilaoshi	2022-01-02	15		1970-01-01	NULL
+lilaoshi	2022-01-04	13		2022-01-02	NULL
+lilaoshi	2022-03-06	66		2022-01-04	2022-01-02
+
+
+fulaoshi	语文	87
+fulaoshi	数学	95
+fulaoshi	英语	68
+lilaoshi	语文	94
+lilaoshi	数学	56
+lilaoshi	英语	84
+chenlaoshi	语文	64
+chenlaoshi	数学	86
+chenlaoshi	英语	84
+luolaoshi	语文	65
+luolaoshi	数学	85
+luolaoshi	英语	78
+
+建表语句
+create table if not exists
+score (name string,
+subject string,
+score int)
+row format delimited fields terminated by '\t';
+
+load data local inpath
+'/home/hadoop/123/score.txt' into table score;
+
+HQL语句
+select name,subject,score,
+rank() over(partition by subject order by score desc) rk,
+dense_rank() over(partition by subject order by score desc) de_rk,
+row_number() over(partition by subject order by score desc) row_rk
+from score;
+
+name		subject	score	rk		de_rk	row_rk
+fulaoshi	数学	95		1		1		1
+chenlaoshi	数学	86		2		2		2
+luolaoshi	数学	85		3		3		3
+lilaoshi	数学	56		4		4		4
+chenlaoshi	英语	84		1		1		1
+lilaoshi	英语	84		1		1		2
+luolaoshi	英语	78		3		2		3
+fulaoshi	英语	68		4		3		4
+lilaoshi	语文	94		1		1		1
+fulaoshi	语文	87		2		2		2
+luolaoshi	语文	65		3		3		3
+chenlaoshi	语文	64		4		4		4
