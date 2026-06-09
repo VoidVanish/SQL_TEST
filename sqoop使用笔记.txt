@@ -2,6 +2,7 @@ sqoop
 1.sqoop简介   不用启动在Hadoop里直接调用就行，不像hive还需要启动
 	sqoop是一款开源ETL工具，主要用于hadoop(hive)与传统数据库(mysql,postgresql,oracle...)之间进行数据的传递。
 2.sqoop操作
+	----2 从数据库里导入数据到hdfs
 	2.1导入：从非大数据集群向大数据集群中传输数据叫做导入
 		(1)全量导入HDFS
 			sqoop import \ --sqoop调用sqoop；import导入参数
@@ -46,19 +47,21 @@ sqoop
 			--num-mappers 1 \
 			--where "id>1003" --where 使用参数方法筛选关系型数据库数据源的行
 	2.2增量导入HDFS
-		(1)append
+		(1)append   只更新不新增 依赖递增的字段
 			sqoop import \
 			--connect jdbc:mysql://192.168.5.100:3306/lee \
 			--username root \
 			--password root \
-			--table t_chongzhi \
-			--fields-terminated-by "," \
+			--table t_chongzhi \   
+			---源路径
+			--fields-terminated-by "," \ 
+			---目标路径
 			--target-dir /hongshan/tc \
 			--num-mappers 1 \
 			--incremental append \ --incremental指定增量更新方式(append或lastmodified)
 			--check-column id \ --check-column指需要依据关系型数据库数据源的哪个字段进行更新
 			--last-value 1003 --last-value上次更新的最后一个值，本次更新需要大于该值。
-		(2)lastmodified
+		(2)lastmodified	新增+更新 依赖最后最大修改时间字段
 			sqoop import \
 			--connect jdbc:mysql://192.168.5.100:3306/lee \
 			--username root \
@@ -84,6 +87,7 @@ sqoop
 			--incremental append \
 			--check-column update_t \
 			--last-value '2022-07-29 12:54:12.1'
+	---从hive表中的hdfs路径导入到hive表格
 	2.3导入hive表的两种形式
 		(1)指定hive中表的HDFS路径来导入/user/hive/warehouse/test.db/t_chongzhi2/day=20220728
 			这里需要先建立该hive表的该分区，才能在hive中查询到数据
@@ -107,6 +111,7 @@ sqoop
 			--table t_chongzhi \
 			--fields-terminated-by "," \
 			--num-mappers 1 \
+			hive直接导入 目标路径和分区
 			--hive-import \  --指定向hive导入
 			--hive-table test.t_chongzhi2 \  --指定向hive中哪张表导入数据
 			--hive-partition-key day \ --指定hive表的分区字段
@@ -114,6 +119,22 @@ sqoop
 			--incremental append \
 			--check-column update_t \
 			--last-value '2022-07-29 12:54:12.1'
+	--通过query参数实现增量更新 从mysql更新到hive表格  
+		sqoop import \
+		--connect jdbc:mysql://192.168.5.100:3306/lee \
+		--username root \
+		--password root \
+		--fields-terminated-by "," \
+		--query "select id,ename,dt from t_chongzhi where update_t > '2026-05-23 12:12:12.1'
+		 and \$CONDITIONS; " \
+		--num-mappers 1 \
+		--target-dir /jjj \
+		--delete-target-dir \
+		--hive-import \
+		--hive-table test.t_chongzhi2 \
+		--hive-partition-key day \
+		--hive-partition-value '2026-06-10'
+	---从hdfs里导入数据到mysql
 	2.4导出：从HDFS将数据导出至关系型数据库(MySQL)
 		2.4.1全量导出
 			sqoop export \ --sqoop调用sqoop；export导出参数

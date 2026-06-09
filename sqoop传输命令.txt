@@ -1,0 +1,185 @@
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /hongshan/tc \
+--delete-target-dir \
+--num-mappers 1
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--fields-terminated-by "," \
+--target-dir /hongshan/tc \
+--delete-target-dir \
+--num-mappers 1 \
+--query 'select id,ename,amount,dt from t_chongzhi where id > 1000 and $CONDITIONS;'
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /hongshan/tc \
+--delete-target-dir \
+--num-mappers 1 \
+--columns id,ename
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /hongshan/tc \
+--delete-target-dir \
+--num-mappers 1 \
+--where "id<1004"
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /hongshan/tc \
+--num-mappers 1 \
+--incremental append \
+--check-column id \
+--last-value 1003
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /hongshan/tc \
+--num-mappers 1 \
+--incremental lastmodified \
+--check-column update_t \
+--last-value '2022-08-26 18:40:38.1' \
+--append
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /hongshan/tc \
+--num-mappers 1 \
+--incremental append \
+--check-column update_t \
+--last-value '2022-08-26 18:40:38.1'
+
+
+create table if not exists
+t_chongzhi2 (id int,
+ename string,
+amount int,
+dt string,
+update_t string)
+partitioned by (day string)
+row format delimited fields terminated by ',';
+
+
+hive -e "alter table test.t_chongzhi2 add partition(day='20220829');"
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /user/hive/warehouse/test.db/t_chongzhi2/day=20220829 \
+--num-mappers 1 \
+--incremental append \
+--check-column update_t \
+--last-value '2022-08-26 18:40:38.1'
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--num-mappers 1 \
+--hive-import \
+--hive-table test.t_chongzhi2 \
+--hive-partition-key day \
+--hive-partition-value 20220828 \
+--incremental append \
+--check-column update_t \
+--last-value '2022-08-26 18:40:38.1'
+
+
+sqoop export \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi_export \
+--input-fields-terminated-by "," \
+--export-dir /user/hive/warehouse/test.db/t_chongzhi2/day=20220828
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--num-mappers 1 \
+--hive-import \
+--hive-table test.t_chongzhi2 \
+--hive-partition-key day \
+--hive-partition-value 20220827 \
+--incremental append \
+--check-column update_t \
+--last-value '2022-07-29 12:55:54.1'
+
+
+sqoop export \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi_export \
+--input-fields-terminated-by "," \
+--export-dir /user/hive/warehouse/test.db/t_chongzhi2/day=20220827 \
+--update-key id \
+--update-mode updateonly
+
+
+sqoop export \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi_export \
+--input-fields-terminated-by "," \
+--export-dir /user/hive/warehouse/test.db/t_chongzhi2/day=20220827 \
+--update-key id \
+--update-mode allowinsert
+
+
+hcatalog工具(需配置环境变量)：
+sqoop export \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi_export \
+--hcatalog-database test \
+--hcatalog-table t_chongzhi2 \
+--hcatalog-partition-keys day \
+--hcatalog-partition-values 20220827 \
+--update-key id \
+--update-mode allowinsert
