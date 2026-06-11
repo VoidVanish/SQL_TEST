@@ -34,7 +34,7 @@ hive
 		5.2hive退出
 			5.2.1 exit;
 			5.2.2 quit;
-		5.3常用交互命令
+		5.3常用交互命令 在liunx本地调用
 			-e 直接调用hivesql语句
 			hive -e "select * from test.emp;"
 			-f 调用文件中hivesql语句
@@ -43,6 +43,11 @@ hive
 			hive -f /home/hadoop/123/hivef.sql > /home/hadoop/123/234/hivef.txt
 		5.4在hive交互窗口里查看HDFS文件系统
 			hive (default)> dfs -ls /;
+		5.5使用JDBC方式连接hive5.5.1启动hiveserver
+		5.5.2服务screen -S hive2
+		 hive --service hiveserver2
+		退出 ctrl+a+d
+5.5.2使用DBeaver连接hive
 6.hive数据类型
 	基本数据类型：
 		TINYINT 1byte有符号整数  2的八次方

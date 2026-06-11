@@ -1,0 +1,180 @@
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /user/hive \
+--delete-target-dir \
+--num-mappers 1
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--fields-terminated-by "," \
+--target-dir /user/hive \
+--delete-target-dir \
+--num-mappers 1
+--query 'select id,ename,amount,dt from t_chongzhi where id>1000 and $CONDITIONS;' \\
+
+
+
+
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "," \
+--target-dir /hongshan/tc \
+--delete-target-dir \
+--num-mappers 1 \
+--columns id,ename
+
+
+
+load data local inpath '/home/hadoop/123/dept_2.txt' into table dept_partition2
+partition(day='20260608',hour='10');
+
+
+
+create table if not exists
+dept_partition_dy (id int,
+deptno string,
+dname string)
+partitioned by (loc string)
+row format delimited fields terminated by '\t' ;
+
+create table if not exists
+dept_partition3 (id int,
+deptno string,
+dname string,
+loc string)
+partitioned by (day string)
+row format delimited fields terminated by '\t' ;
+
+
+
+1	7369	SMITH	CLERK	7902	1980/12/17	800.00		20
+2	7499	ALLEN	SALESMAN	7698	1981/2/20	1600.00	300.00	30
+3	7521	WARD	SALESMAN	7698	1981/2/22	1250.00	500.00	30
+4	7566	JONES	MANAGER	7839	1981/4/2	2975.00		20
+5	7654	MARTIN	SALESMAN	7698	1981/9/28	1250.00	1400.00	30
+6	7698	BLAKE	MANAGER	7839	1981/5/1	2850.00		30
+7	7782	CLARK	MANAGER	7839	1981/6/9	2450.00		10
+8	7788	SCOTT	ANALYST	7566	1987/4/19	3000.00		20
+9	7839	KING	PRESIDENT		1981/11/17	5000.00		10
+10	7844	TURNER	SALESMAN	7698	1981/9/8	1500.00	0.00	30
+11	7876	ADAMS	CLERK	7788	1987/5/23	1100.00		20
+12	7900	JAMES	CLERK	7698	1981/12/3	950.00		30
+13	7902	FORD	ANALYST	7566	1981/12/3	3000.00		20
+14	7934	MILLER	CLERK	7782	1982/1/23	1300.00		10
+
+sqoop export \
+--connect jdbc:mysql://192.168.5.100:3306/lee \ 
+--username root \
+--password root \
+--table t_chongzhi_export \
+--input-fields-terminated-by "," \
+--export-dir /user/hive/
+
+
+--导入hive表
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--fields-terminated-by "\t" \
+--query "select id,ename,amount,dt,update_t from t_chongzhi where update_t > '2026-05-23 12:12:12.1' and \$CONDITIONS; " \
+--num-mappers 1 \
+--target-dir /jjj \
+-delete-target-dir \
+--hive-import \
+--hive-table test.t_chongzhi2 \
+--hive-partition-key day \
+--hive-partition-value '2026-06-08'
+
+
+hive -e "alter table mxx.t_chongzhi2 add partition(day='20260608');"
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--fields-terminated-by "\t" \
+--target-dir /user/hive/warehouse/mxx.db/t_chongzhi2/day=20260608 \
+--num-mappers 1 \
+--incremental lastmodified \
+--check-column update_t \
+--last-value '2026-06-07 12:54:12.1' \
+--append
+
+
+create table if not exists
+t_chongzhi2 (id int,
+ename string,
+amount string,
+dt string,
+update_t string)
+partitioned by (day string)
+row format delimited fields terminated by '\t' ;
+			
+			
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--table t_chongzhi \
+--hive-import \
+--hive-table test.t_chongzhi2 \
+--fields-terminated-by ',' 
+
+
+
+
+load data local inpath '/home/hadoop/123/hsstd.txt' into table hsstd;
+
+-- 更新hive中某条数据
+insert overwrite table hsstd select id,if(id='5','lilei',name) as name from hsstd;
+
+insert overwrite table hsstd (select id,name from(insert into(select id,if(id='5','hanmeimei',name) as name from hsstd) values (20,'azhen')));
+
+hive调优 七八个点
+
+
+
+--判断时间为前一天的函数
+select id,ename,amount,dt,update_t,day from t_chongzhi where trunc(update_t) = trunc(sysdate-1) and \$CONDITIONS;
+
+
+
+--增量更新
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/lee \
+--username root \
+--password root \
+--fields-terminated-by "\t" \
+--query "SELECT id, ename, amount, dt, update_t FROM t_chongzhi WHERE DATE(update_t) = CURDATE() - INTERVAL 1 DAY and \$CONDITIONS;" \
+--target-dir '/user/hive/warehouse/mxx/t_chongzhi2/' \
+--num-mappers 1 \
+--hive-import \
+--只要hive有t_chongzhi2表存在则会在表里面新建一个分区为yesterday的目录文件
+--hive-table mxx.t_chongzhi2 \
+--hive-partition-key day \
+--hive-partition-value "$yesterday"
+
+			
+			
+			
+步骤 判断hello.txt与step1.txt是否存在 如果存在则运行step2
+
+面试题：求无问题 
+
+
+
+
+
+
