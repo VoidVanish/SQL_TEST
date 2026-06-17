@@ -1,0 +1,11 @@
+#dws.job
+type=command
+dependencies=dwddim
+command=/home/hadoop/123/dws/test.sh
+
+
+
+
+
+
+

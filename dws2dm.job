@@ -1,0 +1,7 @@
+#dws2dm.job
+type=command
+dependencies=dws
+command=/home/hadoop/123/dws2dm/dm_trade_age_di.sh &&
+/home/hadoop/123/dws2dm/dm_trade_province_di.sh &&
+/home/hadoop/123/dws2dm/dm_trade_sku_di.sh
+

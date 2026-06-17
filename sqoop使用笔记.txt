@@ -189,4 +189,18 @@ sqoop
 				--hcatalog-table t_chongzhi2 \
 				--hcatalog-partition-keys day \
 				--hcatalog-partition-values 20220827
+
+--从数据库全量更新到hive
+sqoop import \
+  --connect jdbc:mysql://192.168.5.100:3306/mall \
+  --username root \
+  --password root \
+  --table user_info \
+  --fields-terminated-by '\t' \
+  --hive-import \
+  --hive-database shengtumall \
+  --hive-table ods_user_info_df \
+  --hive-overwrite \
+  --delete-target-dir \
+  --num-mappers 1
 				

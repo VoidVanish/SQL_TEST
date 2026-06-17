@@ -416,6 +416,48 @@ hive
 					select id,deptno,dname,loc from dept_partition;
 				(3)查看目标分区表的分区情况
 					show partitions dept_partition_dy;
+二、分区方式的区别体现在插入数据的SQL语句上
+对比项	静态分区	动态分区
+分区值提供方式	用户手动指定分区值	由 SELECT 查询结果的最后一列自动生成
+INSERT 语句特征	PARTITION (dt='2025-06-01')	PARTITION (dt)（只写分区列名，不写值）
+适用场景	一次写入一个或少量的已知分区	一次写入多个分区，分区值动态变化
+需要开启的配置	无需特殊配置	set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+三、具体例子对比
+假设源表 raw_sales 有字段 id, amount, sale_date。
+
+✅ 静态分区插入
+sql
+INSERT OVERWRITE TABLE sales PARTITION (dt='2025-06-01')
+SELECT id, amount FROM raw_sales WHERE sale_date = '2025-06-01';
+分区值 '2025-06-01' 在 SQL 中写死。
+
+每执行一次只写入一个分区。
+
+✅ 动态分区插入
+sql
+INSERT OVERWRITE TABLE sales PARTITION (dt)
+SELECT id, amount, sale_date FROM raw_sales;
+PARTITION (dt) 中只写分区列名，不写值。
+
+SELECT 的最后一列（sale_date）的值会被自动作为分区值。
+
+如果 raw_sales 中有 10 个不同的 sale_date，Hive 会自动创建 10 个分区并分别写入数据。
+
+四、如何区分已经存在的表是动态还是静态分区？
+表本身没有“动态”或“静态”的属性，只有分区表的概念。区别在于你如何使用它：
+
+如果你总是手动指定分区值插入，那就是静态分区使用方式。
+
+如果你依赖查询结果自动生成分区值插入，那就是动态分区使用方式。
+
+一张表完全可以混合使用两种方式（某些分区静态插入，另一些分区动态插入）。
+动态分区（自动按 ds 分区，需确保 SELECT 包含 ds 列）
+五、快速判断口诀
+建表看不出，插入分方式：
+手动写值叫静态，SELECT 最后一列是动态。
+如果你看到一个 INSERT 语句中 PARTITION 子句里等号两边都有值（如 dt='2025-06-01'），就是静态分区；如果只有列名没有值（如 dt），就是动态分区。
+	
 	10.2分桶
 		分桶是将数据集分解成更容易管理的若干部分的另一个技术。
 		分区针对的是数据的存储路径，分桶针对的是数据文件。

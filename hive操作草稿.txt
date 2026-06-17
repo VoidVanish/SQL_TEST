@@ -171,7 +171,680 @@ sqoop import \
 			
 步骤 判断hello.txt与step1.txt是否存在 如果存在则运行step2
 
-面试题：求无问题 
+面试题：求无问题
+
+
+
+-------------------------项目
+#客户信息 df全量更新 ods_user_info_df.sh
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+#源表
+--table user_info \
+--fields-terminated-by "\t" \
+--num-mappers 1 \
+--target-dir /shengtumall/ods_user_info_df/ds=$yesterday \
+--hive-import \
+#目标hive表格
+--hive-database shengtumall \
+#目标表
+--hive-table ods_user_info_df \
+#分区里全量更新
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+
+
+#订单细节 di增量更新 ods_order_detail_di
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+today=$(date +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+--query "SELECT id, order_id, sku_id, sku_name, img_url, order_price, sku_num, create_time FROM order_detail WHERE create_time >= '${yesterday} 00:00:00' AND create_time < '${today} 00:00:00' AND \$CONDITIONS" \
+--fields-terminated-by "\t" \
+--num-mappers 1 \
+--target-dir /shengtumall/ods_order_detail_di/ds=$yesterday \
+--hive-import \
+--hive-database shengtumall \
+--hive-table ods_order_detail_di \
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+
+#订单信息 di增量更新 ods_order_info_di
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+today=$(date +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+--query "select id,consignee,consignee_tel,total_amount,order_status,user_id,payment_way,delivery_address,order_comment,out_trade_no,trade_body,create_time,operate_time,expire_time,tracking_no,parent_order_id,img_url,province_id from order_info WHERE create_time >= '${yesterday} 00:00:00' AND create_time < '${today} 00:00:00' AND \$CONDITIONS" \
+--fields-terminated-by "\t" \
+--num-mappers 1 \
+--target-dir /shengtumall/ods_order_info_di/ds=$yesterday \
+--hive-import \
+--hive-database shengtumall \
+--hive-table ods_order_info_di \
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+
+#商品信息表 全量 ods_sku_info_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+#源表
+--table sku_info \
+--fields-terminated-by "\t" \  
+--num-mappers 1 \
+--target-dir /shengtumall/ods_sku_info_df/ds=$yesterday \
+--hive-import \
+#目标hive表格
+--hive-database shengtumall \
+#目标表
+--hive-table ods_sku_info_df \
+#分区里全量更新
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+
+#三级类品信息表 ods_base_category3_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+--table base_category3 \
+--fields-terminated-by "\t" \
+--num-mappers 1 \
+--target-dir /shengtumall/ods_base_category3_df/ds=$yesterday \
+--hive-import \
+--hive-database shengtumall \
+--hive-table ods_base_category3_df \
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+#二级类品信息表 ods_base_category2_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+--table base_category2 \
+--fields-terminated-by "\t" \
+--num-mappers 1 \
+--target-dir /shengtumall/ods_base_category2_df/ds=$yesterday \
+--hive-import \
+--hive-database shengtumall \
+--hive-table ods_base_category2_df \
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+#一级类品信息表 ods_base_category1_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+--table base_category1 \
+--fields-terminated-by "\t" \
+--num-mappers 1 \
+--target-dir /shengtumall/ods_base_category1_df/ds=$yesterday \
+--hive-import \
+--hive-database shengtumall \
+--hive-table ods_base_category1_df \
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+#省份信息表 ods_base_province_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+--table base_province \
+--fields-terminated-by "\t" \
+--num-mappers 1 \
+--target-dir /shengtumall/ods_base_province_df/ds=$yesterday \
+--hive-import \
+--hive-database shengtumall \
+--hive-table ods_base_province_df \
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+#地区信息表 ods_base_region_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop import \
+--connect jdbc:mysql://192.168.5.100:3306/mall \
+--username root \
+--password root \
+--table base_region \
+--fields-terminated-by "\t" \
+--num-mappers 1 \
+--target-dir /shengtumall/ods_base_region_df/ds=$yesterday \
+--hive-import \
+--hive-database shengtumall \
+--hive-table ods_base_region_df \
+--hive-overwrite \
+--hive-partition-key ds \
+--hive-partition-value "$yesterday"
+
+
+### 5.3明细层脚本开发
+
+在Linux中创建`/home/hadoop/123/ods2dwd/`文件夹，在文件夹中以每个目标表名作为每个脚本的命名，如：`dwd_order_detail_di.sh`
+
+清洗规则：
+
+- 事实字段数据类型需转为数字型； select to_number() 在ods层弄过不需要动
+- 事实字段空值处理为0  nvl（字段，0）
+- 去除主键为空的行 where过滤 id=0则过滤
+
+# dwd_order_detail_di
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "alter table shengtumall.dwd_order_detail_di add partition(ds='${yesterday}')"
+sqoop import
+--query 'select 两个表的字段，其中去除订单细节表的id（所有字段加上nvl）
+from ods_order_info_di left oi join ods_order_detail_di od
+on oi.id=od.order_id where id is not null'
+
+
+HIVESQL
+#dwd 订单详情信息更新
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "
+insert overwrite table shengtumall.dwd_order_detail_di partition(ds='${yesterday}')
+select a.id
+       ,a.order_id
+       ,a.sku_id
+       ,a.sku_name
+       ,a.img_url
+       ,nvl(a.order_price,0) as order_price
+       ,nvl(a.sku_num,0) as sku_num
+       ,a.create_time 
+	   ,b.consignee
+       ,b.consignee_tel
+       ,nvl(b.total_amount,0) as total_amount
+	   ,b.order_status
+	   ,b.user_id
+	   ,b.payment_way
+       ,b.delivery_address
+       ,b.order_comment
+       ,b.out_trade_no
+       ,b.trade_body
+       ,b.operate_time
+       ,b.expire_time
+       ,b.tracking_no
+       ,b.parent_order_id
+       ,b.province_id
+from (select id
+       ,order_id
+       ,sku_id
+       ,sku_name
+       ,img_url
+       ,order_price
+       ,sku_num
+       ,create_time 
+	from shengtumall.ods_order_detail_di
+	where ds = '${yesterday}') a
+left join (select id
+	   ,consignee
+       ,consignee_tel
+       ,total_amount
+	   ,order_status
+	   ,user_id
+	   ,payment_way
+       ,delivery_address
+       ,order_comment
+       ,out_trade_no
+       ,trade_body
+       ,operate_time
+       ,expire_time
+       ,tracking_no
+       ,parent_order_id
+       ,province_id
+	from shengtumall.ods_order_info_di
+	where ds = '${yesterday}' ) b
+on a.order_id = b.id
+where a.id is not null;
+"
+
+
+
+a
+select id
+       ,order_id
+       ,sku_id
+       ,sku_name
+       ,img_url
+       ,order_price
+       ,sku_num
+       ,create_time 
+	from shengtumall.ods_order_detail_di
+	where create_time = '${yesterday}' 
+	
+b
+select consignee
+       ,consignee_tel
+       ,total_amount
+	   ,order_status
+	   ,user_id
+	   ,payment_way
+       ,delivery_address
+       ,order_comment
+       ,out_trade_no
+       ,trade_body
+       ,operate_time
+       ,expire_time
+       ,tracking_no
+       ,parent_order_id
+       ,province_id
+	from shengtumall.ods_order_info_di
+	where create_time = '${yesterday}' 
+	
+	
+	
+	
+#dim用户信息表 dim_user_info_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "
+insert overwrite table shengtumall.dim_user_info_df partition(ds='${yesterday}')
+select id
+	,login_name
+	,nick_name
+	,passwd	
+	,name	
+	,phone_num	
+	,email	
+	,head_img
+	,user_level
+	,birthday
+	,gender
+	,create_time
+from shengtumall.ods_user_info_df
+where ds = '${yesterday}';"
+
+
+#地区省份表 dim_base_province_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "
+set hive.exec.dynamic.partition.mode=nonstrict;
+insert overwrite table shengtumall.dim_base_province_df partition(ds)
+select
+
+a.id
+,a.name
+,a.region_id
+,NVL(b.region_name, '未知') as region_name
+,a.area_code
+,'${yesterday}' as ds
+
+from (select 
+id
+,name
+,region_id
+,area_code
+from shengtumall.ods_base_province_df
+where ds = '${yesterday}') a
+left join
+(select
+id
+,region_name
+from shengtumall.ods_base_region_df
+where ds = '${yesterday}') b
+on a.region_id = b.id;"
+
+
+
+a 省份信息表
+select 
+id
+,name
+,region_id
+,area_code
+from ods_base_province_df
+where ds = '${yesterday}'; 
+
+b 地区信息表
+select
+id
+,region_name
+from ods_base_region_df
+where ds = '${yesterday}'; 
+
+
+
+#商品信息表 dim_sku_info_df
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "
+set hive.exec.dynamic.partition.mode=nonstrict;
+insert overwrite table shengtumall.dim_sku_info_df partition(ds)
+select
+sku.id
+,sku.spu_id
+,sku.price
+,sku.sku_name
+,sku.sku_desc
+,sku.weight
+,sku.tm_id
+,b.c3_id as category3_id
+,b.c3_name as category3_name
+,b.c2_id as category2_id
+,b.c2_name as category2_name
+,b.c1_id as category1_id
+,b.c1_name as category1_name
+,sku.sku_default_img
+,sku.create_time
+,'${yesterday}' as ds
+
+from shengtumall.ods_sku_info_df sku
+left join (select 
+c3.id as c3_id
+,c3.name as c3_name
+,c2.id as c2_id
+,c2.name as c2_name
+,c1.id as c1_id
+,c1.name as c1_name
+from shengtumall.ods_base_category3_df c3
+left join shengtumall.ods_base_category2_df c2
+on c3.category2_id = c2.id and c2.ds = '${yesterday}'
+left join shengtumall.ods_base_category1_df c1
+on c2.category1_id = c1.id and c1.ds = '${yesterday}'
+where c3.ds = '${yesterday}') b
+on sku.category3_id = b.c3_id
+where sku.ds =  '${yesterday}';"
+
+其他维表
+select 
+c3.id as c3_id
+,c3.name as c3_name
+,c2.id as c2_id
+,c2.name as c2_name
+,c1.id as c1_id
+,c1.name as c1_name
+from shengtumall.ods_base_category3_df c3
+left join shengtumall.ods_base_category2_df c2
+on c3.category2_id = c2.id and c2.ds = '${yesterday}'
+left join shengtumall.ods_base_category1_df c1
+on c2.category1_id = c1.id and c1.ds = '${yesterday}'
+where c3.ds = '${yesterday}'
+
+
+
+
+
+
+
+dws宽表创建
+order_detail作为主表
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "
+insert overwrite table shengtumall.dws_trade_detail_di partition(ds='${yesterday}')
+select
+#细节表
+a.order_amount
+,a.sku_num --sum(sku_num)
+,a.order_count
+#用户维度属性
+,b.birthday
+#商品维度
+,d.id  --sku_id
+,d.sku_name
+,d.category3_id
+,d.category3_name
+,d.category2_id
+,d.category2_name
+,d.category1_id
+,d.category1_name
+#地区维度
+,c.id
+,c.name
+,c.region_id
+,c.region_name
+
+from (select 
+
+	sum(order_price*sku_num) as order_amount
+	,sku_id  -- 关联商品信息维度表
+	,sum(sku_num) as sku_num
+	,user_id   -- 关联用户信息维度表
+	,province_id  -- 关联地区维度表
+	,COUNT(DISTINCT order_id) as order_count
+	
+from shengtumall.dwd_order_detail_di
+where ds='${yesterday}'
+group by sku_id,user_id,province_id) a
+left join (select 
+id  --user_id
+,birthday
+from shengtumall.dim_user_info_df
+where ds='${yesterday}') b
+on a.user_id = b.id  -- 关联用户信息维度表
+
+left join (select
+id   --province_id
+,name  --province_name
+,region_id
+,region_name
+from shengtumall.dim_base_province_df
+where ds='${yesterday}') c
+on a.province_id = c.id  -- 关联地区维度表
+
+left join (select
+
+id  --sku_id
+,sku_name
+,category3_id
+,category3_name
+,category2_id
+,category2_name
+,category1_id
+,category1_name
+
+from shengtumall.dim_sku_info_df
+where ds = '${yesterday}') d
+on a.sku_id = d.id ;"  -- 关联商品信息维度表
+
+
+
+
+--事务表 留字段
+
+
+select 
+
+	order_id 
+	sku_id  --关联商品信息维度表
+	sum(sku_num) as sku_num --sum(sku_num)
+	sum(total_amount) as order_amount --order_amount sum(total_amount)
+	user_id   --关联用户信息维度表
+	province_id  --关联地区维度表
+	count(order_id) as order_count --order_count
+
+from shengtumall.dwd_order_detail_di
+where ds='${yesterday}'
+group by order_id,sku_id,user_id,province_id
+
+先聚合事务表字段
+
+
+
+--地区维度表 留字段
+select
+
+id   --province_id
+name  --province_name
+region_id
+region_name
+
+from shengtumall.dim_base_province_df
+where ds='${yesterday}';
+
+--商品维度表 留字段
+select
+
+id  --sku_id
+sku_name
+category3_id
+category3_name
+category2_id
+category2_name
+category1_id
+category1_name
+
+from shengtumall.dim_sku_info_df
+where ds='${yesterday}';
+
+
+--用户维度表 留字段
+select 
+id  --user_id
+birthday
+from shengtumall.dim_user_info_df
+where ds='${yesterday}';
+
+
+dm层数据导入
+根据年龄统计销售表
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "
+insert overwrite table shengtumall.dm_trade_age_di partition(ds='${yesterday}')
+
+select 
+a.age
+,sum(a.sku_num) as sku_num
+,sum(a.order_count) as order_count
+,sum(a.order_amount) as order_amount
+,round(avg(a.order_amount),2) as avg_amount
+,'${yesterday}' as ds_str
+
+from(
+SELECT 
+    round(datediff(to_date('${yesterday}'), to_date(user_birthday))/365)  as age
+   	,sku_num
+	,order_count
+	,order_amount
+FROM shengtumall.dws_trade_detail_di_1
+where ds='${yesterday}') a
+group by a.age;
+"
+
+
+地区销售统计表
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "
+insert overwrite table shengtumall.dm_trade_province_di partition(ds='${yesterday}')
+
+select 
+
+province_id
+,province_name
+,region_id
+,region_name
+,sum(a.sku_num) as sku_num
+,sum(a.order_count) as order_count
+,sum(a.order_amount) as order_amount
+,round(avg(a.order_amount),2) as avg_amount
+,'${yesterday}' as ds_str
+
+from(
+SELECT 
+	province_id
+	,province_name
+	,region_id
+	,region_name
+   	,sku_num
+	,order_count
+	,order_amount
+FROM shengtumall.dws_trade_detail_di_1
+where ds='${yesterday}') a
+group by a.province_id,a.province_name,a.region_id,a.region_name;
+"
+
+
+商品销售统计表
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+hive -e "
+insert overwrite table shengtumall.dm_trade_sku_di partition(ds='${yesterday}')
+
+
+select 
+
+sku_id
+,sku_name
+,sum(sku_num) as sku_num
+,category3_id
+,category2_id
+,category1_id
+,category3_name
+,category2_name
+,category1_name
+,sum(order_count) as order_count
+,sum(order_amount) as order_amount
+,round(avg(order_amount),2) as avg_amount
+,'${yesterday}' as ds_str
+
+FROM shengtumall.dws_trade_detail_di_1
+where ds='${yesterday}'
+group by sku_id,sku_name,category3_id,category2_id,category1_id,category3_name,category2_name,category1_name;
+"
+
+
+导出到mysql
+--年龄销售统计表
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop export \
+--connect jdbc:mysql://192.168.5.100:3306/bi_base \
+--username root \
+--password root \
+--table trade_age \
+--input-fields-terminated-by "\t" \
+--export-dir /user/hive/warehouse/shengtumall.db/dm_trade_age_di/ds=$yesterday
+
+
+--地区销售统计表
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop export \
+--connect jdbc:mysql://192.168.5.100:3306/bi_base \
+--username root \
+--password root \
+--table trade_province \
+--input-fields-terminated-by "\t" \
+--export-dir /user/hive/warehouse/shengtumall.db/dm_trade_province_di/ds=$yesterday
+
+
+--商品销售统计表
+yesterday=$(date -d "yesterday" +%Y-%m-%d)
+sqoop export \
+--connect jdbc:mysql://192.168.5.100:3306/bi_base \
+--username root \
+--password root \
+--table trade_sku \
+--input-fields-terminated-by "\t" \
+--export-dir /user/hive/warehouse/shengtumall.db/dm_trade_sku_di/ds=$yesterday
+
+
+
+
+
+
+
+
 
 
 
