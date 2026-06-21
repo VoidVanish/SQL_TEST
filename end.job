@@ -1,0 +1,4 @@
+#end.job
+type=command
+dependencies=trade_age,trade_province,trade_sku
+command=echo "All dependent jobs completed successfully."

@@ -1,0 +1,4 @@
+#dws_trade_detail_di.job
+type=command
+dependencies=dwd_order_detail_di,dim_user_info_df,dim_sku_info_df,dim_base_province_df
+command=/home/hadoop/123/dws/test.sh

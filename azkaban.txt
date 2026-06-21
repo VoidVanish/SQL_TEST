@@ -1,0 +1,81 @@
+azkaban
+1.azkaban简介
+	azkaban是由LinkedIn公司推出的一个批量工作流任务调度器，主要用于在一个工作流内以特定顺序运行一组工作和流程，
+	它的配置是通过简单的key:value对的方式，通过配置其中dependencies来设置依赖关系。
+	azkaban使用job配置文件建立任务之间的依赖关系，并提供一个易于使用的web用户界面维护和跟踪工作流。
+2.azkaban特点
+	2.1兼容任何版本的hadoop
+	2.2易于使用的web界面
+	2.3简单的工作流的上传
+	2.4方便设置任务之间的关系
+	2.5调度工作流
+3.azkaban架构
+	3.1 azkabanWebServer
+		是整个azkaban工作流系统的主要管理者，用户登录认证，负责project管理，定时执行工作流，跟踪工作流执行进度等。
+	3.2 azkabanExecutorServer
+		负责具体的azkabanExecutorServer工作流的提交，执行，通过MySQL数据来协调任务的执行。
+	3.3 关系型数据库(MySQL)
+		存储大部分执行流状态，azkabanWebServer和azkabanExecutorServer都需要访问数据库
+4.azkaban操作
+	1.启动azkabanExecutorServer
+		screen -S azkaban-executor
+		cd /opt/module/azkaban-2.5.0/azkaban-executor-2.5.0/bin/
+		./azkaban-executor-start.sh
+		Ctrl+A+D
+	2.启动azkabanWebServer
+		screen -S azkaban-web
+		cd /opt/module/azkaban-2.5.0/azkaban-web-2.5.0/bin/
+		./azkaban-web-start.sh
+		Ctrl+A+D
+	3.浏览器进入web管理页面
+		https://192.168.5.100:8443
+		username:azkaban
+		password:azkaban
+	4.编辑job文件，注意编码格式为utf-8，command行最后不能有空格
+		4.1hello world
+			1.编辑job文件
+			job文件名：hello.job
+			job文件内容：
+				#hello.job
+				type=command
+				command=/home/hadoop/123/azkaban-hello.sh
+			2.在Linux中编辑被调度的shell脚本
+			被调度的shell脚本名：azkaban-hello.sh
+			被调度的shell脚本内容：
+				#!/bin/bash
+				echo "hello azkaban!" > /home/hadoop/123/azkaban-first-job.txt
+			3.将job文件压缩为zip压缩包并上传azkaban的web端
+			将hello.job打包为zip压缩包
+			在azkaban的web端创建project
+			在创建的project中upload压缩包
+			4.点击project进入后执行。
+		4.2job依赖
+			1.在Linux中分别编辑step1.sh和step2.sh
+				step1.sh
+				#!/bin/bash
+				echo "hello azkaban step1!" > /home/hadoop/123/step1_result.txt
+				
+				chmod +x step1.sh
+				
+				step2.sh
+				#!/bin/bash
+				cat /home/hadoop/123/step1_result.txt > /home/hadoop/123/step2_result.txt
+				
+				chmod +x step2.sh
+			2.在Windows中编辑第一步的job文件
+				step1.job
+				#step1.job
+				type=command
+				command=/home/hadoop/123/step1.sh
+			3.在Windows中编辑第二步的job文件
+				step2.job
+				#step2.job
+				type=command
+				dependencies=step1
+				command=/home/hadoop/123/step2.sh
+			4.将两个job文件打包为zip压缩包
+			5.在azkaban的web端创建project，在创建的project中upload压缩包。
+			6.点击project进入后设置schedule定时执行。
+			
+		
+	

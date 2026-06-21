@@ -1,12 +1,11 @@
 #mall2ods.job
 type=command
 command=/home/hadoop/123/mall2ods/ods_base_category2_df.sh && 
-/home/hadoop/123/mall2ods/ods_base_region_df.sh &&
-/home/hadoop/123/mall2ods/ods_sku_info_df.sh &&
-/home/hadoop/123/mall2ods/ods_sku_info_df.sh &&
-/home/hadoop/123/mall2ods/ods_base_category3_df.sh &&
-/home/hadoop/123/mall2ods/ods_order _detail_di.sh &&
-/home/hadoop/123/mall2ods/ods_user_info_df.sh &&
-/home/hadoop/123/mall2ods/ods_base_category1_df.sh &&
-/home/hadoop/123/mall2ods/ods_base_province_df.sh &&
+/home/hadoop/123/mall2ods/ods_base_region_df.sh && 
+/home/hadoop/123/mall2ods/ods_sku_info_df.sh && 
+/home/hadoop/123/mall2ods/ods_base_category3_df.sh && 
+/home/hadoop/123/mall2ods/ods_order_detail_di.sh && 
+/home/hadoop/123/mall2ods/ods_user_info_df.sh && 
+/home/hadoop/123/mall2ods/ods_base_category1_df.sh && 
+/home/hadoop/123/mall2ods/ods_base_province_df.sh && 
 /home/hadoop/123/mall2ods/ods_order_info_di.sh

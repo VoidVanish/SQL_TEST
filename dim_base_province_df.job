@@ -1,0 +1,4 @@
+#dim_base_province_df.job
+type=command
+dependencies=ods_base_region_df,ods_base_province_df
+command=/home/hadoop/123/ods2dwd/dim_base_province_df.sh

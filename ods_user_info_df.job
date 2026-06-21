@@ -1,0 +1,3 @@
+#ods_user_info_df.job
+type=command
+command=/home/hadoop/123/mall2ods/ods_user_info_df.sh

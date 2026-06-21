@@ -1,0 +1,4 @@
+#dim_sku_info_df.job
+type=command
+dependencies=ods_sku_info_df,ods_base_category3_df,ods_base_category2_df,ods_base_category1_df
+command=/home/hadoop/123/ods2dwd/dim_sku_info_df.sh

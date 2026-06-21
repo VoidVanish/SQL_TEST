@@ -1,6 +1,6 @@
 #dm2bi.job
 type=command
 dependencies=dws2dm
-command=/home/hadoop/123/dm2bi/trade_age.sh &&
-/home/hadoop/123/dm2bi/trade_province.sh &&
+command=/home/hadoop/123/dm2bi/trade_age.sh && 
+/home/hadoop/123/dm2bi/trade_province.sh && 
 /home/hadoop/123/dm2bi/trade_sku.sh

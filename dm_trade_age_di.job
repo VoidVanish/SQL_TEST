@@ -1,0 +1,4 @@
+#dm_trade_age_di.job
+type=command
+dependencies=dws_trade_detail_di
+command=/home/hadoop/123/dws2dm/dm_trade_age_di.sh

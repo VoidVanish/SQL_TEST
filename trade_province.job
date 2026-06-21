@@ -1,0 +1,4 @@
+#trade_province.job
+type=command
+dependencies=dm_trade_province_di
+command=/home/hadoop/123/dm2bi/trade_province.sh

@@ -44,7 +44,8 @@ hive
 		5.4在hive交互窗口里查看HDFS文件系统
 			hive (default)> dfs -ls /;
 		5.5使用JDBC方式连接hive5.5.1启动hiveserver
-		5.5.2服务screen -S hive2
+		5.5.2服务
+		screen -S hive2
 		 hive --service hiveserver2
 		退出 ctrl+a+d
 5.5.2使用DBeaver连接hive

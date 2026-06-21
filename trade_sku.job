@@ -1,0 +1,4 @@
+#trade_sku.job
+type=command
+dependencies=dm_trade_sku_di
+command=/home/hadoop/123/dm2bi/trade_sku.sh

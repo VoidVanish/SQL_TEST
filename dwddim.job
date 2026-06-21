@@ -1,7 +1,7 @@
 #dwddim.job
 type=command
 dependencies=mall2ods
-command=/home/hadoop/123/ods2dwd/dim_base_province_df.sh &&
-/home/hadoop/123/ods2dwd/dim_sku_info_df.sh &&
-/home/hadoop/123/ods2dwd/dim_user_info_df.sh &&
+command=/home/hadoop/123/ods2dwd/dim_base_province_df.sh && 
+/home/hadoop/123/ods2dwd/dim_sku_info_df.sh && 
+/home/hadoop/123/ods2dwd/dim_user_info_df.sh && 
 /home/hadoop/123/ods2dwd/dwd_order_detail_di.sh

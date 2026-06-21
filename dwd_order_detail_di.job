@@ -1,0 +1,4 @@
+#dwd_order_detail_di.job
+type=command
+dependencies=ods_order _detail_di,ods_order_info_di
+command=/home/hadoop/123/ods2dwd/dwd_order_detail_di.sh

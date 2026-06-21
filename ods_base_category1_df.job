@@ -1,0 +1,3 @@
+#ods_base_category1_df.job
+type=command
+command=/home/hadoop/123/mall2ods/ods_base_category1_df.sh

@@ -1,0 +1,4 @@
+#trade_age.job
+type=command
+dependencies=dm_trade_age_di
+command=/home/hadoop/123/dm2bi/trade_age.sh
