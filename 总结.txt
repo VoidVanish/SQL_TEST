@@ -12,11 +12,24 @@ hive架构由hdfs mr和yarn构成 具体工作原理在mr里首先通过解析�
 1 分桶表可启用SMB Join
 2 采用ORC/Parquet列式存储
 3 先过滤后关联
+4 分区裁剪、列剪枝、提前过滤
 本质：减少数据扫描量、避免Shuffle倾斜、利用分布式并行能力
 
 4.观看data_note/hive/mapreduce与数据倾斜.mp4
-    用自己的话总结关于数据倾斜的问题的原理和解决方案
+    原本应该均匀分配给多个机器并行处理的数据，因为某个点数据量过大，
+	导致大部分任务1分钟跑完，而处理这个Key的任务跑了1小时甚至OOM（内存溢出）崩溃。
 	
+	解决：
+	1. 打散空值  CASE 
+		WHEN user_id IS NULL THEN CONCAT('null_', RAND()) 
+		ELSE user_id 
+	2. 开启 Hive 的倾斜优化参数  -- 开启Map端聚合（会在Map端先做一次部分聚合，减少Reduce数据量）
+set hive.map.aggr = true;
+-- 开启Skew Join（自动检测倾斜键，将其拆分成多个任务处理）
+set hive.optimize.skewjoin = true;
+	3. 使用分桶减少数据倾斜出现 当大表join小表且小表小于25mb时 启用mapjoin 在本地进行reduce操作 减少对shuffle
+		的占用（“在Map端完成Join，不走Reduce” ）
+		但是如果数据过大会造成内存溢出（oom） 这时候只能使用加盐或者分桶去避免数据倾斜
 	
 5.开窗函数
     1.什么场景需要用开窗函数
