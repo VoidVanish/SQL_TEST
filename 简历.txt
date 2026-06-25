@@ -1,0 +1,13 @@
+
+熟悉hadoop数仓工具（hdfs、MapReduce、yarn）、sparksql
+熟悉hive生态 包括hivesql自定义函数编写、hive调优
+熟悉liunx操作系统（centos、乌班图）
+熟悉etl工具：kettle、sqoop、datdx
+熟练使用数据库 oracle、存储过程（pl/sql编写）、分析函数运用、sql调优
+熟悉运用pl/sql、shell、c语言、c++、java
+熟悉hadoop数仓工具（hdfs、MapReduce、yarn）、sparksql
+熟悉可视化工具 帆软finereport、dashboard
+
+
+
+
