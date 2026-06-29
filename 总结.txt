@@ -27,7 +27,7 @@ hive架构由hdfs mr和yarn构成 具体工作原理在mr里首先通过解析�
 set hive.map.aggr = true;
 -- 开启Skew Join（自动检测倾斜键，将其拆分成多个任务处理）
 set hive.optimize.skewjoin = true;
-	3. 使用分桶减少数据倾斜出现 当大表join小表且小表小于25mb时 启用mapjoin 在本地进行reduce操作 减少对shuffle
+	3. 使用分桶减少数据倾斜出现;当大表join小表且小表小于25mb时 启用mapjoin 在本地进行reduce操作 减少对shuffle
 		的占用（“在Map端完成Join，不走Reduce” ）
 		但是如果数据过大会造成内存溢出（oom） 这时候只能使用加盐或者分桶去避免数据倾斜
 	
