@@ -1,0 +1,174 @@
+--实验数据：
+
+  DROP TABLE G0328;
+  CREATE TABLE G0328 (
+  ID INT,
+  金额 INT
+  );
+
+  INSERT INTO G0328 VALUES (1,30);
+  INSERT INTO G0328 VALUES (2,30);
+  INSERT INTO G0328 VALUES (3,30);
+  INSERT INTO G0328 VALUES (4,9);
+  INSERT INTO G0328 VALUES (5,1);
+  INSERT INTO G0328 VALUES (6,1);
+  INSERT INTO G0328 VALUES (7,15);
+  INSERT INTO G0328 VALUES (8,33);
+  INSERT INTO G0328 VALUES (9,5);
+  INSERT INTO G0328 VALUES (10,8);
+  INSERT INTO G0328 VALUES (11,14);
+  INSERT INTO G0328 VALUES (12,3);
+  COMMIT;
+
+  SELECT * FROM G0328;
+  
+/**  
+【题】：--表G0328如下,ID为自增长列，累计金额刚好超过100的那一条？
+
+ 说明 ：-- 不用分析函数，请用字段嵌套子查询做出来，预期结果如下：
+ 
+            --------------------------
+            | ID | 金额  |  累加值   | 
+            --------------------------
+            | 6  |  1    |   101     | 
+            -------------------------- 
+*/
+
+求累加到当前行的金额是一百 使用sum（）over开窗累加 
+
+求得所有金额的累加 我要得到的是金额刚好超过一百的那行数据 在此条件下 求得的累加金额表可以进行过滤判断
+找到累加金额刚好超过一百的那条 单独输出一行6 1 101 的数据 值判断无效
+
+每一次进入累加到当前行
+主表 A 子查询在B SELECT子查询逻辑：主表A的每一行与子查询B中的所有行匹配 每次匹配完子查询返回一个值 否则报错
+SELECT * ,子查询
+FROM G0328 A
+
+----重要！理解字段子查询的重要问题
+SELECT A.*,(SELECT 1 FROM G0328 B WHERE B.ID=A.ID)  --例：如果匹配条件输出值为多行 B.ID<=A.ID 则数据出错
+                                                               --解决方法 输出聚合函数即可解决这个问题
+                                                           --如果匹配条件后输出值为单行数据 则可以输出所有值 
+FROM G0328 A
+
+
+SELECT ROW_NUMBER() OVER(ORDER BY T1.ID) PM
+
+SELECT T2.*
+  FROM (SELECT T1.*, ROW_NUMBER() OVER(ORDER BY T1.ID) PM
+          FROM (SELECT ID,
+                       金额,
+                       SUM(金额) OVER(ORDER BY ID ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) 累加值
+                  FROM G0328) T1
+         WHERE T1.累加值 > 100) T2
+ WHERE T2.PM = 1
+
+SELECT SUM(金额)
+FROM G0328
+WHERE ID=3
+
+
+
+DROP TABLE cust_tal; --存款客户信息表
+DROP TABLE bal_info; --客户账户余额信息表
+DROP TABLE AMT_INF ; --账户交易流水信息表
+
+CREATE TABLE cust_tal
+(
+  CUST_ID NUMBER(3),
+  CUST_NAME nvarchar2(20) 
+);
+INSERT INTO cust_tal VALUES('111','张三');
+INSERT INTO cust_tal VALUES('222','李四');
+INSERT INTO cust_tal VALUES('333','王五');
+INSERT INTO cust_tal VALUES('444','lee');
+INSERT INTO cust_tal VALUES('555','sql');
+COMMIT;
+
+CREATE TABLE bal_info
+(
+  ACCT_ID NUMBER(6),
+  CUST_ID NUMBER(3),
+  BAL NUMBER(3) 
+);
+INSERT INTO bal_info VALUES('111111','111','100');
+INSERT INTO bal_info VALUES('222222','111','200');
+INSERT INTO bal_info VALUES('333333','222','100');
+INSERT INTO bal_info VALUES('444444','333','150');
+INSERT INTO bal_info VALUES('555555','444','200');
+INSERT INTO bal_info VALUES('666666','444','300');
+COMMIT;
+
+CREATE TABLE AMT_INF
+(
+  SEQ_ID NUMBER(1),
+  ACCT_ID NUMBER(6),
+  TRADE_DATE DATE,
+  TRADE_TYPE VARCHAR(10) ,
+  AMT  NUMBER(3)
+);
+INSERT INTO AMT_INF VALUES('1','111111',TO_DATE('20191231','YYYYMMDD'),'存入','100');
+INSERT INTO AMT_INF VALUES('2','111111',TO_DATE('20200130','YYYYMMDD'),'存入','50');
+INSERT INTO AMT_INF VALUES('3','111111',TO_DATE('20200304','YYYYMMDD'),'取现','200');
+INSERT INTO AMT_INF VALUES('4','111111',TO_DATE('20200601','YYYYMMDD'),'取现','10');
+INSERT INTO AMT_INF VALUES('5','111111',TO_DATE('20200703','YYYYMMDD'),'取现','20');
+INSERT INTO AMT_INF VALUES('6','333333',TO_DATE('20200306','YYYYMMDD'),'存入','200');
+INSERT INTO AMT_INF VALUES('7','444444',TO_DATE('20200603','YYYYMMDD'),'取现','10');
+INSERT INTO AMT_INF VALUES('8','444444',TO_DATE('20200706','YYYYMMDD'),'取现','20');
+COMMIT;
+
+SELECT * FROM cust_tal  客户表里的客户id与银行账户表里的账户id关联
+SELECT * FROM bal_info  账户表里的账户id与流水表里的账户id关联
+SELECT * FROM AMT_INF   流水表里的流水id对应多个重复账户 但与流水记录关联   
+/**  
+【题】：请用一个SQL写出本年存入和取现总金额及当前存款余额。 查询结果如下图
+
+CUST_ID  CUST_NAME    BAL   存入总金额   取现总金额
+ 111       张三       300     150           230
+ 222       李四       100     200           null
+ 333       王五       150     null          30
+ 444       lee        500     null          null
+ 555       sql        null    null          null
+ */
+ 逻辑分析 需要新建两个字段 分别是银行存款、存入总额、取现总额 
+                                     存入总额 和取现在流水表当中
+                      
+               
+SELECT ACCT_ID,TRADE_TYPE,SUM(AMT) 存取总额
+FROM AMT_INF
+GROUP BY ACCT_ID,TRADE_TYPE
+
+列转行 把存入、取现作为字段 总额作为数值
+
+1 存取总额临表
+SELECT *
+FROM (SELECT ACCT_ID,TRADE_TYPE,SUM(AMT) 存取总额
+     FROM AMT_INF
+     GROUP BY ACCT_ID,TRADE_TYPE
+) T1 PIVOT (
+  SUM(T1.存取总额) FOR TRADE_TYPE IN('存入' AS 存入总金额 ,'取现' AS 取现总金额)
+  );
+
+BAL表需要聚合各个人的账户总金额
+2 账户总存款临表
+
+SELECT ACCT_ID,CUST_ID,SUM(BAL)
+FROM bal_info
+GROUP BY ACCT_ID,CUST_ID
+
+3关联所有表
+SELECT CT.CUST_ID,CT.CUST_NAME,SUM(CU.BAL) BAL,SUM(AC.存入总金额) 存入总金额,SUM(AC.取现总金额) 取现总金额
+  FROM cust_tal CT
+  LEFT JOIN (SELECT ACCT_ID, CUST_ID, SUM(BAL) BAL
+               FROM bal_info
+              GROUP BY ACCT_ID, CUST_ID) CU
+    ON CU.CUST_ID = CT.CUST_ID
+  LEFT JOIN (SELECT *
+               FROM (SELECT ACCT_ID, TRADE_TYPE, SUM(AMT) 存取总额
+                       FROM AMT_INF
+                      GROUP BY ACCT_ID, TRADE_TYPE) T1
+             PIVOT(SUM(T1.存取总额)
+                FOR TRADE_TYPE IN('存入' AS 存入总金额,
+                                 '取现' AS 取现总金额))) AC
+    ON CU.ACCT_ID = AC.ACCT_ID
+    GROUP BY CT.CUST_ID,CUST_NAME
+    ORDER BY CUST_ID

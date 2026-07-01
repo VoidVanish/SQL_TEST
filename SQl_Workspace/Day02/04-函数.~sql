@@ -1,0 +1,114 @@
+--concat 字符拼接函数 以下两种连接模式都可 第二种为手动操作
+select concat('hello','world'),'hello'||'world'
+from dual;
+-----------------
+select *
+from dual;
+
+---删除操作----
+
+
+---字符函数---截取 查找 替换
+---- 需求2: 从helloworld中截取world
+select substr('helloworld',6,5) from dual;
+
+---查找 instr(str, x [,start] [,n] ) 在str中从start位置开始查找第n次出现的x, 找到返回位置, 找不到返回0
+select instr('helloworld','c',1,1)
+from dual;
+
+---- 需求4: 从右向左在helloworld中查找第一次出现的o
+--若start为负值 则从右向左查 返回值依旧从左往右数返回
+select instr('helloworld','o',-1,1) from dual;
+
+---- 需求2: 把手机号中间4位替换成**** 例如: 18620015858 => 186****5858
+--基础
+select replace('18620015858','2001','****') from dual;
+--进阶
+select replace('18620015858',substr('18620015858',4,4),'****') from dual;
+select substr(phone,4,4) from dual;
+
+
+
+------时间函数————————----
+select sysdate from dual;
+select sysdate, add_months(sysdate,1) from dual;
+
+
+-- 需求1: 把当前日期 转成 '2026-05-08'
+select sysdate,to_char(sysdate,'YYYY-MM-DD') from dual;
+
+
+
+从"software"找到'f'的位置
+select instr('software','f',1,1) from dual;
+
+查询从"software"中去除'a'的结果
+select rtrim(substr('software',1,6),'a') from dual; --不需要加‘’
+--select substr('software',1,6) from dual;  --截取前六位
+
+从'HelloWorld'中截取从第2个字符开始的5个字符
+select substr(ltrim('HelloWorld','H'),1,5) from dual;
+
+
+查找'World'在'HelloWorld'中的位置
+select instr('HelloWorld','World',-1,1) from dual;
+
+将'HelloWorld'中的'World'替换成'BigData'
+select replace('HelloWorld','World','BigData') from dual;
+
+
+查询员工姓名以'S'结尾的员工信息，不允许使用like，写出2-3种查询方法(有点难度)
+法一：select *
+from emp
+where instr(ename,'S',1) = length(ename);  --instr(ename,'S',-1,1) = length(ename)
+instr(ename,'S',1)  返回位置
+
+法二：select *
+from emp
+where length(rtrim(ename,'S')) = (length(ename)-1); --优化 rtrim(ename,'S') != ename
+
+法三：截取ename最后一位与‘S’比较 --substr也可以从右向左 使用负号
+
+
+
+(1)查询30部门的雇员，显示员工全名（要求: 首字母大写，其余小写） 
+select concat(substr(ename,1,1), substr(lower(ename),2))
+from emp
+where deptno = 30;
+
+(2)已知一个手机号（例如: 18620015858），转成为 XXX-XXXX-XXXX 格式显示
+例如:
+---------------------------
+18620015858  186-2001-5858
+---------------------------
+select concat(concat(concat(concat(substr(18620015858,1,3),'-'),substr(18620015858,4,4)),'-'),substr(18620015858,8)) 
+from dual;
+
+
+
+(3)已知一个任意邮箱（例如: ikun@qq.com, ikun@163.com）请提取邮箱域名部分（@后面的部分）
+---------------------------
+邮箱			域名
+ikun@qq.com     qq.com
+ikun@163.com	163.com
+---------------------------
+select substr('ikun@qq.com',instr('ikun@qq.com','@',1)) from dual;
+select substr('ikun@163.com',instr('ikun@163.com','@',1)) from dual;
+
+
+(4) 需求：从完整文件路径中提取目录路径（不包含文件名）
+例如:
+文件路径: '/home/user/documents/reports/q4_financial_report_2023.pdf'
+目录路径: '/home/user/documents/reports/'                     
+
+select substr('/home/user/documents/reports/q4_financial_report_2023.pdf',1,
+instr('/home/user/documents/reports/q4_financial_report_2023.pdf','/',1,5)
+) from dual;
+
+instr('/home/user/documents/reports/q4_financial_report_2023.pdf','/',1,5)  找到位置
+
+
+
+
+
+

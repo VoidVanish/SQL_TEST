@@ -1,0 +1,142 @@
+--传入一个部门编号,输出该部门下的员工信息
+CREATE OR REPLACE PROCEDURE SP_A(P_A IN NUMBER) IS
+  CURSOR C_A IS SELECT * FROM EMP1 WHERE DEPTNO=P_A; 
+BEGIN
+  FOR I IN C_A LOOP
+    DBMS_OUTPUT.put_line(I.ENAME);
+  END LOOP;
+END;
+
+
+BEGIN
+
+  SP_A(20);
+END;
+
+
+--传入一个员工编号,返回他的员工姓名(用出入参数完成)
+CREATE OR REPLACE PROCEDURE SP_A(P_A IN OUT VARCHAR2) IS
+
+BEGIN 
+  SELECT ENAME INTO P_A FROM EMP1 WHERE EMPNO = TO_NUMBER(P_A,'9999');
+END;
+
+DECLARE
+V_A VARCHAR2(20);
+BEGIN
+  V_A:=7788;
+  DBMS_OUTPUT.put_line('入参' || V_A);
+  SP_A(V_A);
+  DBMS_OUTPUT.put_line('出参' || V_A);
+END; 
+
+
+CREATE TABLE DEPT1 AS SELECT * FROM DEPT;
+SELECT * FROM DEPT1;
+
+--传入一个岗位 修改该岗位下的姓名为张三 修改成功返回成功
+CREATE OR REPLACE PROCEDURE SP_A(P_A IN VARCHAR2) IS
+BEGIN 
+  UPDATE EMP1 SET ENAME = '张三' WHERE JOB = P_A;
+END;
+
+BEGIN
+  SP_A('CLERK');
+END;
+
+
+--传入一个员工编号，就删除该员工信息
+CREATE OR REPLACE PROCEDURE SP_A(P_A IN NUMBER) IS
+BEGIN
+   DELETE FROM EMP1 WHERE EMPNO = P_A;
+END;
+
+BEGIN
+  SP_A(7788);
+END;
+DROP TABLE EMP1;
+CREATE TABLE EMP1 AS SELECT * FROM EMP;
+SELECT * FROM EMP1;
+
+SELECT * FROM DEPT1;
+    小练习：
+      创建一个存储过程，输入参数为员工编号，
+      输出参数为输入员工所在部门名称和该部门平均工资，
+      要求在处理过程中使用EMP1表作为员工表：
+      1.若输入员工在ACCOUNTING部门，该员工职位为MANAGER，
+      则该部门全员涨薪1000，该员工为其他职位，则该部门全员涨薪800；
+      2.若输入员工在SALES部门，该员工职位为MANAGER，则该部门全员涨薪800，
+      该员工为其他职位，则该部门全员涨薪600；
+      3.若输入员工在其他部门，不管该员工什么职位，所在部门全员涨薪500；
+      4.将上述涨薪操作更新EMP1表；
+      5.平均工资为涨薪后平均工资。
+CREATE OR REPLACE PROCEDURE SP_A(P_A IN NUMBER,P_DNAME OUT VARCHAR2,P_C OUT NUMBER) IS
+V_JOB VARCHAR2(20);
+V_BM NUMBER;
+BEGIN
+  SELECT D.DNAME,E.JOB,E.DEPTNO INTO P_DNAME,V_JOB,V_BM FROM EMP1 E JOIN DEPT1 D ON E.DEPTNO=D.DEPTNO
+  WHERE E.EMPNO=P_A;
+  IF P_DNAME = 'ACCOUNTING' THEN
+    IF V_JOB = 'MANAGER' THEN UPDATE EMP1 SET SAL = SAL+1000 WHERE DEPTNO=V_BM;
+    ELSE UPDATE EMP1 SET SAL = SAL+800 WHERE DEPTNO=V_BM;
+    END IF;
+  ELSIF P_DNAME = 'SALES' THEN 
+    IF V_JOB = 'MANAGER' THEN UPDATE EMP1 SET SAL = SAL+800 WHERE DEPTNO=V_BM;
+    ELSE UPDATE EMP1 SET SAL = SAL+600 WHERE DEPTNO=V_BM;
+    END IF;
+  ELSE UPDATE EMP1 SET SAL = SAL+500 WHERE DEPTNO=V_BM;
+  END IF;
+  ----输出涨薪后的平均工资
+  SELECT AVG(SAL) INTO P_C FROM EMP1 WHERE DEPTNO=V_BM;
+END;
+
+DECLARE 
+V_BMH VARCHAR2(20);
+V_PJ NUMBER;
+
+BEGIN
+  SP_A(7788,V_BMH,V_PJ);
+  DBMS_OUTPUT.put_line(V_BMH||V_PJ);
+END;
+
+
+
+--全量更新 清空目标表,将源数据全部新增至目标表
+目标表
+1   张三  19
+2   李四  20
+
+源数据
+1   张三  22
+2   李四  20
+3   王五  23
+
+CREATE TABLE EMP_MB AS SELECT * FROM EMP;
+CREATE TABLE EMP_YB AS SELECT * FROM EMP;
+
+SELECT * FROM EMP_YB FOR UPDATE;
+SELECT * FROM EMP_YB;
+
+CREATE OR REPLACE PROCEDURE SP_A IS
+BEGIN
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE EMP_MB';
+  INSERT INTO EMP_MB SELECT Y.EMPNO,
+                            Y.ENAME,
+                            Y.JOB,
+                            Y.MGR,
+                            Y.HIREDATE,
+                            Y.SAL,
+                            Y.COMM,
+                            Y.DEPTNO
+                            FROM EMP_YB Y;
+  END;                          
+
+--调用
+BEGIN 
+  SP_A;
+END;
+
+SELECT * FROM EMP_MB;
+SELECT * FROM EMP_YB;
+
+

@@ -1,0 +1,260 @@
+--函数
+    过程和函数统称为PL/SQL子程序，他们是被命名的PL/SQL块，均存储在数据库中，
+    并通过输入、输出参数或输入/输出参数与其调用者交换信息。
+
+--过程和函数的区别是*****
+函数总向调用者返回数据，而过程不返回数据。
+函数可以在查询语句中调用,存储过程不可以    
+函数只有入参,存储过程有三种参数    
+    
+--语法格式：FUNCTION
+CREATE OR REPLACE FUNCTION FUN_A(P_A NUMBER, P_B NUMBER) RETURN NUMBER
+--声明函数返回值的数据类型(不能写长度)
+ IS
+  --声明部分
+  V_SUM NUMBER;
+BEGIN
+  V_SUM := P_A + P_B;
+  --声明函数具体的返回值
+  RETURN V_SUM;
+  --函数有且仅有一个返回值
+  --返回值的数据类型要和声明的数据类型保持一致
+END;
+    
+--调用
+SELECT  FUN_A(10,90) FROM DUAL;
+
+--在代码块中调用
+BEGIN
+ DBMS_OUTPUT.put_line( FUN_A(20,30));
+END;
+
+--求任意两数之间的偶数和
+CREATE OR REPLACE FUNCTION FUN_A(P_A NUMBER, P_B NUMBER) RETURN NUMBER IS
+  V_SUM NUMBER := 0;
+BEGIN
+  FOR I IN LEAST(P_A, P_B) .. GREATEST(P_A, P_B) LOOP
+    IF MOD(I, 2) = 0 THEN
+      V_SUM := V_SUM + I;
+    END IF;
+  END LOOP;
+  RETURN V_SUM;
+END;
+
+--调用
+SELECT FUN_A(10,20) FROM  DUAL;
+
+传入三个数字求出之间的最大值
+CREATE OR REPLACE FUNCTION FUN_CP(P_A NUMBER, P_B NUMBER, P_C NUMBER)
+  RETURN NUMBER IS
+  V_MAX NUMBER;
+BEGIN
+  IF P_A > P_B THEN
+    IF P_A > P_C THEN
+      V_MAX := P_A;
+    ELSE
+      V_MAX := P_C;
+    END IF;
+  ELSIF P_A < P_B THEN
+    IF P_B > P_C THEN
+      V_MAX := P_B;
+    ELSE
+      V_MAX := P_C;
+    END IF;
+  END IF;
+  RETURN V_MAX;
+END;
+
+--调用
+SELECT FUN_CP(1,2,3) FROM DUAL;
+
+
+返回用户明年预期的工资是多少，
+输入一个员工的编号，10号部门涨工资10%，20号涨20%，30号涨30%，
+返回这个员工的预期工资。
+7369 800 20 960
+CREATE OR REPLACE FUNCTION FUN_EXPTSAL(P_EMPNO NUMBER) RETURN NUMBER IS
+V_DEPTNO VARCHAR2(20);
+V_BFROSAL NUMBER; ---前工资
+V_AFTSAL NUMBER;  ---后工资
+BEGIN
+  SELECT DEPTNO,SAL INTO V_DEPTNO,V_BFROSAL FROM EMP1 WHERE EMPNO = P_EMPNO;
+  IF V_DEPTNO = 10 THEN V_AFTSAL := V_BFROSAL*1.1;
+  ELSIF V_DEPTNO = 20 THEN V_AFTSAL := V_BFROSAL*1.2;
+  ELSE V_AFTSAL := V_BFROSAL*1.3;
+  END IF;
+  RETURN V_AFTSAL;
+END;
+
+SELECT FUN_EXPTSAL(7788) FROM DUAL;
+SELECT * FROM EMP1
+
+
+创建一个函数,可以提取字符串中的数字
+'A1B2C3D4'
+SELECT * FROM EMP;
+
+CREATE OR REPLACE FUNCTION FUN_SUBNUMB(P_CHAR VARCHAR2) RETURN NUMBER IS
+V_AFTNUM NUMBER(20);
+BEGIN
+  FOR I IN 1 .. LENGTH(P_CHAR) LOOP
+  V_AFTNUM:=V_AFTNUM||(REGEXP_SUBSTR(P_CHAR,'\d',1,I));
+  END LOOP;
+  RETURN V_AFTNUM;
+END;
+
+SELECT FUN_SUBNUMB('A1B2C3D4') FROM DUAL;
+
+SELECT REGEXP_SUBSTR('ABC789EFG456','\d+',1,1)  FROM DUAL;
+
+
+
+
+小练习:
+存储过程：新增一个部门，输入一个部门的编号、名称、地点，
+如果这个编号和名字没有重复，就插入数据，否则就弹框提示该部门已存在
+
+函数：传入一个年份，返回他的属相，已知1900年生肖是鼠
+
+存储过程：传入一个部门编号，查询该部门下员工信息，
+然后将查询结果返回  
+SELECT * FROM DEPT1
+
+----包头
+CREATE OR REPLACE PACKAGE BAO IS 
+V_A VARCHAR2(20);
+--存储过程一
+PROCEDURE SP_A(P_BM NUMBER,P_DNAME VARCHAR2,P_LOC VARCHAR2);
+--函数一
+FUNCTION FUN_A(P_YEAR NUMBER) RETURN VARCHAR2;
+---存储过程二
+PROCEDURE SP_B(P_DEPTNO NUMBER);
+END BAO;
+
+--------------包体
+CREATE OR REPLACE PACKAGE BODY BAO IS 
+--存储过程一
+PROCEDURE SP_A(P_BM NUMBER, P_DNAME VARCHAR2, P_LOC VARCHAR2) IS
+  V_BM VARCHAR2(20);
+BEGIN
+  SELECT COUNT(1) INTO V_BM FROM DEPT WHERE DEPTNO = P_BM OR DNAME = P_DNAME;
+  IF V_BM=0 THEN
+    INSERT INTO DEPT1 VALUES (P_BM, P_DNAME, P_LOC);
+    IF SQL%FOUND THEN
+      DBMS_OUTPUT.put_line('插入成功');
+    END IF;
+  ELSE
+    DBMS_OUTPUT.put_line('该部门已存在');
+  END IF;
+END SP_A;
+--函数一 1913
+FUNCTION FUN_A(P_YEAR NUMBER) RETURN VARCHAR2 IS
+  V_SHU VARCHAR2(20);
+  BEGIN
+    IF MOD(MOD(P_YEAR,1900),12)=0 THEN V_SHU:='鼠';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=1 THEN V_SHU:='牛';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=2 THEN V_SHU:='虎';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=3 THEN V_SHU:='兔';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=4 THEN V_SHU:='龙';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=5 THEN V_SHU:='蛇';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=6 THEN V_SHU:='马';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=7 THEN V_SHU:='羊';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=8 THEN V_SHU:='猴';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=9 THEN V_SHU:='鸡';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=10 THEN V_SHU:='狗';
+    ELSIF MOD(MOD(P_YEAR,1900),12)=11 THEN V_SHU:='猪';
+  END IF;
+  RETURN V_SHU;
+  END FUN_A;
+---存储过程二
+PROCEDURE SP_B(P_DEPTNO NUMBER) IS
+  CURSOR C_A IS
+    SELECT * FROM EMP1 WHERE DEPTNO = P_DEPTNO;
+BEGIN
+  FOR I IN C_A LOOP
+    DBMS_OUTPUT.put_line(I.ENAME);
+  END LOOP;
+END SP_B;
+END BAO;
+
+---调用
+
+BEGIN 
+  BAO.SP_A(99,'大数据','北京');
+  BAO.V_A:=BAO.FUN_A(1911);
+  DBMS_OUTPUT.put_line(BAO.V_A);
+END;
+
+
+SELECT MOD(MOD(1928,1900),12) FROM DUAL;
+
+
+
+-------------自定义异常
+----禁止查询老板名字
+DECLARE 
+V_ENAME VARCHAR2(20);
+V_EMPNO NUMBER;
+BEGIN
+  SELECT ENAME INTO V_ENAME FROM EMP1 WHERE EMPNO=V_EMPNO;
+  IF V_ENAME = 'KING' THEN raise_application_error('bunnegcha');
+  END IF;
+  DBMS_OUTPUT.put_line('');
+END;
+
+
+
+
+--------自定义变量类型 游标类型
+
+
+
+
+--拉链表 保留历史数据,反应历史数据的变化状态,解决缓慢变化维
+--创建表
+CREATE TABLE YB (ID NUMBER,NAME VARCHAR2 (20),SAL NUMBER);
+
+SELECT * FROM YB FOR UPDATE
+
+--创建拉链表 多两个数据 一个开始时间 一个失效时限
+CREATE TABLE LLB AS SELECT Y.ID,
+                           Y.NAME,
+                           Y.SAL,
+                           TRUNC(SYSDATE)-1000 AS STR_DATE,
+                           DATE'9999-12-31' AS END_DATE
+                            FROM YB Y
+SELECT * FROM LLB
+
+---更新原表数据
+SELECT * FROM YB FOR UPDATE 原表数据有修改和新增
+
+---将原表数据更新同步到拉链表当中
+--将源表和拉链表不一样的数据查询出来新增至拉链表
+--源表只有最新的,那么源表和拉链表完全一样的数据,不需要操作证明是最新的
+--那么不一样的数据,就是需要同步到拉链表的数据
+INSERT INTO LLB SELECT 
+       Y.ID,
+       Y.NAME,
+       Y.SAL,
+       --两条新数据
+       TRUNC(SYSDATE),
+       DATE '9999-12-31'
+ FROM YB Y
+ WHERE NOT EXISTS (SELECT 1 FROM LLB L WHERE Y.ID=L.ID AND Y.NAME=L.NAME AND Y.SAL=L.SAL);
+
+------新增数据之后 需要修改历史时间 把新增前最新的数据的失效时限改为当前日期时间
+UPDATE TABLE LLB SET 
+END_DATE=TRUNC(SYSDATE)
+WHERE EXISTS()
+
+
+
+
+
+
+
+
+
+
+
+

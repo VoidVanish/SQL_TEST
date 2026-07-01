@@ -1,0 +1,179 @@
+SELECT *
+FROM (
+      SELECT '1XXXX60' AS CN FROM DUAL
+      UNION ALL
+      SELECT '1888860'AS CN FROM DUAL
+      UNION ALL
+      SELECT '16660'AS CN FROM DUAL
+      UNION ALL
+      SELECT '1SSS60'AS CN FROM DUAL
+      UNION ALL
+      SELECT 'ABCDEF'AS CN FROM DUAL
+      UNION ALL
+      SELECT '1234567'AS CN FROM DUAL
+      UNION ALL
+      SELECT '1BKD21'AS CN FROM DUAL
+      UNION ALL
+      SELECT '1b456'AS CN FROM DUAL
+      UNION ALL
+      SELECT 'qdsxx'AS CN FROM DUAL
+      UNION ALL
+      SELECT '1XX%X60'AS CN FROM DUAL
+      UNION ALL
+      SELECT '%%%%'AS CN FROM DUAL
+     ) T 
+     WHERE 
+--1.查询value中以1开头60结尾的记录并且长度是7位
+--T.CN LIKE '1____60'
+
+--2.查询value中以1开头60结尾的记录并且长度是7位且全部是数字的记录   SELECT * FROM MOHU; 
+--REGEXP_LIKE(CN,'^1\d{4}60$')
+  
+--3.查询 value 中不包含任何数字的记录
+--REGEXP_LIKE(CN,'^\D')
+
+--4.查询 value 中不是纯数字的记录
+--REGEXP_LIKE(CN,'\D\d')
+
+--5.查询以 12 或 1b 开头的记录，区分大小写
+--REGEXP_LIKE(CN,'(^12)|(^1b)')
+
+--6.查询以 12 或 1b 开头的记录，不区分大小写
+--REGEXP_LIKE(CN,'(^12)|(^1b)','i')
+
+
+--7.查询所有均为 小写字母 或 数字的记录
+--REGEXP_LIKE(CN,'(^[a-z])|(^[0-9]+$)')
+
+1XXXX60
+1888860
+16660
+1SSS60
+ABCDEF
+1234567
+1BKD21
+1b456
+qdsxx
+1XX%X60
+%%%%
+
+------------正则表达式表
+DROP TABLE VALUE111;
+CREATE TABLE VALUE111(CN VARCHAR2(100));
+INSERT INTO VALUE111
+VALUES('1XXXX60');
+INSERT INTO VALUE111
+VALUES('1888860');
+INSERT INTO VALUE111
+VALUES('16660');
+INSERT INTO VALUE111
+VALUES('1SSS60');
+INSERT INTO VALUE111
+VALUES('ABCDEF');
+INSERT INTO VALUE111
+VALUES('1234567');
+INSERT INTO VALUE111
+VALUES('1BKD21');
+INSERT INTO VALUE111
+VALUES('1b456');
+INSERT INTO VALUE111
+VALUES('qdsxx');
+INSERT INTO VALUE111
+VALUES('1XX%X60');
+INSERT INTO VALUE111
+VALUES('%%%%');
+commit;
+
+SELECT * FROM VALUE111 VA WHERE
+--6.查询以 12 或 1b 开头的记录，不区分大小写
+REGEXP_LIKE(CN,'(^12)|(^1b)','i')
+
+
+
+-----------------截取邮箱 
+DROP TABLE EMAILS;
+CREATE TABLE EMAILS(CN VARCHAR2(100));
+INSERT INTO EMAILS
+VALUES('aB1@qq.com');
+INSERT INTO EMAILS
+VALUES('ccc@163.com');
+INSERT INTO EMAILS
+VALUES('agS3@167.com');
+SELECT * FROM EMAILS
+
+SELECT REGEXP_SUBSTR(CN,'\w+\w',1,1) 用户名,REGEXP_SUBSTR(CN,'@.+',1,1) 邮箱格式
+FROM EMAILS
+
+
+---------筛选出固定电话和手机号码
+SELECT * FROM DIANHUA;
+固定电话格式：0开头 + 2到3位任意数字 + '-' + 6到7位任意数字
+手机号码格式：1开头 + 10位任意数字（11位）
+
+SELECT REGEXP_SUBSTR(CN1,'^0\d+[-]\d+',1,1) 固定电话,
+       REGEXP_SUBSTR(CN1,'^1\d{10}',1,1) 手机号码
+FROM DIANHUA;
+
+
+DROP TABLE DIANHUA;
+CREATE TABLE DIANHUA(CN1 VARCHAR2(100));
+INSERT INTO DIANHUA
+VALUES('0755-11112222');
+INSERT INTO DIANHUA
+VALUES('055-33334444');
+INSERT INTO DIANHUA
+VALUES('0755 55556666');
+INSERT INTO DIANHUA
+VALUES('AE86-77778888');
+INSERT INTO DIANHUA
+VALUES('0755-888999');
+INSERT INTO DIANHUA
+VALUES('15866668888');
+INSERT INTO DIANHUA
+VALUES('015866668888');
+INSERT INTO DIANHUA
+VALUES('13566666');
+
+
+----------------------------------------------
+
+
+
+检查手机号是否合法
+长度11位 全部是数字 必须1开头 第二位3589
+^1[3589][0-9]{9}$
+^表示开始
+$表示结束
+[]一组可能会出现的字符
+{}匹配次数
+{A,B} 最少匹配A次,最多匹配B次
+{A,}最少匹配A次,最多无数次
++ 匹配一次或者无数次
+* 匹配0次或者无数次
+? 匹配0次或者1次
+\ 转义字符
+- 表示区间 0-9匹配所有数字
+\d 表示所有的数字0-9
+--小写转大写表示取反 \d 数字 \D 非数字
+\w 表示所有数字,小写字母,大写字母[0-9A-Za-z]
+.  表示任意字符
+|  表示或者的意思
+() 表示一组正则表达式
+[^] 表示取反 [^0-9]非数字
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

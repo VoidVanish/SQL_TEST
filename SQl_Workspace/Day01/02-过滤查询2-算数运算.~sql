@@ -1,0 +1,29 @@
+---算数运算
+---算数优化 运算内存减少
+
+-- 需求1: 查询部门20且薪资大于2000的雇员信息
+select *
+from emp
+where deptno = 20 and sal > 2000;
+
+-- 需求2: 查询部门号是10、30的雇员信息
+select *
+from emp
+where deptno= 10 or deptno = 30;
+
+-- 需求3: 查询部门号不是20的雇员信息
+select *
+from emp
+where not deptno = 20;
+
+---- 需求2: 查询部门号是10、30的雇员信息
+select *
+from emp
+where deptno in (10,30);
+
+-- 需求: 查询名字中带M雇员
+select * from emp where ename like '%M%';
+
+-- 小练习: 查询30部门的雇员，按薪资升序排序，如果薪资相同，按入职日期降序
+select * from emp where deptno = 30
+order by sal, hiredate desc;

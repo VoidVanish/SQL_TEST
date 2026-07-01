@@ -1,0 +1,527 @@
+-- 链接：https://2048ai.net/681d776fa5baf817cf49c585.html?spm=1001.2101.3001.6650.13&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Eactivity-13-118670474-blog-91958663.235%5Ev43%5Epc_blog_bottom_relevance_base9&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7Eactivity-13-118670474-blog-91958663.235%5Ev43%5Epc_blog_bottom_relevance_base9&utm_relevant_index=20
+-- 建表语句：
+一、创建数据表并插入数据
+-- 学生表：
+drop table Student50;
+create table Student50(SId varchar2(10),Sname varchar2(10),Sage date,Ssex varchar2(10));
+insert into Student50 values('01' , '赵雷' ,date'1990-01-01' , '男');
+insert into Student50 values('02' , '钱电' ,date'1990-12-21' , '男');
+insert into Student50 values('03' , '孙风' ,date'1990-05-20' , '男');
+insert into Student50 values('04' , '李云' ,date'1990-08-06' , '男');
+insert into Student50 values('05' , '周梅' ,date'1991-12-01' , '女');
+insert into Student50 values('06' , '吴兰' ,date'1992-03-01' , '女');
+insert into Student50 values('07' , '郑竹' ,date'1989-07-01' , '女');
+insert into Student50 values('09' , '张三' ,date'2017-12-20' , '女');
+insert into Student50 values('10' , '李四' ,date'2017-12-25' , '女');
+insert into Student50 values('11' , '李四' ,date'2017-12-30' , '女');
+insert into Student50 values('12' , '赵六' ,date'2017-01-01' , '女');
+insert into Student50 values('13' , '孙七' ,date'2018-01-01' , '女');
+select * from Student50;
+-- 课程表：
+drop table Course50;
+create table Course50(CId varchar2(10),Cname varchar2(10),TId varchar2(10));
+insert into Course50 values('01' , '语文' , '02');
+insert into Course50 values('02' , '数学' , '01');
+insert into Course50 values('03' , '英语' , '03');
+select * from Course50;
+-- 教师表：
+drop table Teacher50
+create table Teacher50(TId varchar2(10),Tname varchar2(10));
+insert into Teacher50 values('01' , '张三');
+insert into Teacher50 values('02' , '李四');
+insert into Teacher50 values('03' , '王五');
+select * from Teacher50;
+-- 成绩表：
+drop table SC50;
+create table SC50(SId varchar2(10),CId varchar2(10),score decimal(18,1));
+insert into SC50 values('01' , '01' , 80);
+insert into SC50 values('01' , '02' , 90);
+insert into SC50 values('01' , '03' , 99);
+insert into SC50 values('02' , '01' , 70);
+insert into SC50 values('02' , '02' , 60);
+insert into SC50 values('02' , '03' , 80);
+insert into SC50 values('03' , '01' , 80);
+insert into SC50 values('03' , '02' , 80);
+insert into SC50 values('03' , '03' , 80);
+insert into SC50 values('04' , '01' , 50);
+insert into SC50 values('04' , '02' , 30);
+insert into SC50 values('04' , '03' , 20);
+insert into SC50 values('05' , '01' , 76);
+insert into SC50 values('05' , '02' , 87);
+insert into SC50 values('06' , '01' , 31);
+insert into SC50 values('06' , '03' , 34);
+insert into SC50 values('07' , '02' , 89);
+insert into SC50 values('07' , '03' , 98);
+select * from SC50;
+--
+commit;
+--
+-- select * from Student50;
+-- select * from Course50;
+-- select * from Teacher50;
+-- select * from SC50;
+
+-- 题库：
+题目1：查询"01"课程比"02"课程成绩高的学生的信息、课程分数
+
+SELECT ST.SID,
+       ST.SNAME,
+       ST.SAGE,
+       ST.SSEX,
+       T.SCORE FROM Student50 ST JOIN (
+SELECT SC.SID,SC.SCORE FROM SC50 SC JOIN SC50 SC1 ON SC.SID = SC1.SID WHERE SC.CID = 01 AND SC1.CID = 02 AND SC.SCORE>SC1.SCORE) T
+ON ST.SID = T.SID;
+
+题目2：查询平均成绩大于等于60分且总分大于200分的同学且必须考3门的学生编号和学生姓名和平均成绩
+
+SELECT T1.SID,ST.SNAME,T1.平均成绩 FROM (
+SELECT SID, AVG(SCORE) 平均成绩 ,SUM(SCORE) 总分，COUNT(CID) 课程数 FROM SC50 GROUP BY SID) T1 JOIN Student50 ST ON T1.SID=ST.SID
+WHERE T1.平均成绩 > 60 AND T1.总分 > 200 AND T1.课程数 = 3;
+
+题目3：查询平均成绩小于60分的同学的学生编号、学生姓名、平均成绩（包括有成绩的和无成绩）
+
+SELECT * FROM
+(SELECT SID, AVG(SCORE) 平均成绩 ,SUM(SCORE) 总分，COUNT(CID) 课程数 FROM SC50 GROUP BY SID) T1 JOIN Student50 ST ON T1.SID=ST.SID
+WHERE T1.平均成绩 < 60;
+
+题目4：查询所有同学的学生编号、学生姓名、选课总数、所有课程的总成绩
+
+SELECT ST.SID,ST.SNAME,T2.课程总成绩,T2.选课总数 FROM Student50 ST JOIN(
+SELECT SID, SUM(SCORE) 课程总成绩，COUNT(CID) 选课总数 FROM SC50 GROUP BY SID) T2 ON ST.SID=T2.SID; 
+
+题目5：查询“李”姓老师的数量
+
+SELECT COUNT(TNAME) 姓李老师的数量 FROM Teacher50 WHERE SUBSTR(TNAME,INSTR(TNAME,'李',1,1),1)='李' GROUP BY TNAME;
+
+题目6：查询学过张三老师授课的同学信息
+
+SELECT ST.SID, ST.SNAME, ST.SAGE, ST.SSEX
+  FROM Student50 ST
+ WHERE SID IN
+       (SELECT SID
+          FROM SC50
+         WHERE CID =
+               (SELECT CID
+                  FROM Course50
+                 WHERE TID = (SELECT TID FROM Teacher50 WHERE TNAME = '张三')))
+
+题目7：找出没有学过张三老师课程的学生
+
+SELECT ST.SID, ST.SNAME, ST.SAGE, ST.SSEX
+  FROM Student50 ST
+ WHERE SID NOT IN
+       (SELECT SID
+          FROM SC50
+         WHERE CID =
+               (SELECT CID
+                  FROM Course50
+                 WHERE TID = (SELECT TID FROM Teacher50 WHERE TNAME = '张三')))
+
+题目8：查询学过编号为01，并且学过编号为02课程的学生信息
+
+SELECT ST.*
+  FROM Student50 ST
+  JOIN (SELECT SC1.SID
+          FROM SC50 SC1
+          JOIN SC50 SC2
+            ON SC1.SID = SC2.SID
+         WHERE SC1.CID = 01
+           AND SC2.CID = 02) T3
+    ON T3.SID = ST.SID
+
+题目9：查询学过01课程，但是没有学过02课程的学生信息
+1 先选择学过02课程的学生再取反
+
+SELECT *
+  FROM Student50
+ WHERE SID = (SELECT SC2.SID
+                FROM SC50 SC2
+               WHERE SC2.SID NOT IN
+                     (SELECT SC1.SID FROM SC50 SC1 WHERE SC1.CID = 02)
+                 AND SC2.CID = 01);
+
+题目10：查询没有学完全部课程的同学的信息
+求课程数 SELECT COUNT(*) FROM Course50
+
+SELECT ST.SID, ST.SNAME, ST.SAGE, ST.SSEX
+  FROM Student50 ST
+  JOIN (SELECT SID, COUNT(*) 学习的课程数量 FROM SC50 GROUP BY SID) T4
+    ON ST.SID = T4.SID
+ WHERE T4.学习的课程数量 < (SELECT COUNT(*) FROM Course50);
+
+题目11：查询至少有一门课与学号为01的同学所学相同的同学的信息
+：找到至少有一门课是赵雷学习的课程的其他所有同学 赵雷学了1 2 3门 则在其他同学学习的课程中找到至少一门 输出
+
+SELECT SC.CID FROM SC50 SC WHERE SC.SID=01 --找出赵雷学习的课程cid
+SELECT SC1.SID FROM SC50 SC1 WHERE SC1.CID IN (SELECT SC.CID FROM SC50 SC WHERE SC.SID=01) AND SC1.SID!=01 GROUP BY SC1.SID
+
+SELECT *
+  FROM Student50 ST
+ WHERE ST.SID IN
+       (SELECT SC1.SID
+          FROM SC50 SC1
+         WHERE SC1.CID IN (SELECT SC.CID FROM SC50 SC WHERE SC.SID = 01)
+           AND SC1.SID != 01
+         GROUP BY SC1.SID)
+
+题目12：查询和01同学学习的课程完全相同的同学的信息
+表自连接
+--链接cid相同的同学
+SELECT T1.SC2ID,COUNT(1)
+  FROM (SELECT SC1.CID SC1CID, SC1.SID SC1ID
+          FROM SC50 SC1
+         WHERE SC1.SID = 01) T
+  LEFT JOIN (SELECT SC2.CID SC2CID, SC2.SID SC2ID
+               FROM SC50 SC2
+              WHERE SC2.SID != 01) T1
+    ON T.SC1CID = T1.SC2CID
+ WHERE T1.SC2CID IS NOT NULL
+ GROUP BY T1.SC2ID
+ HAVING COUNT(1) = (SELECT COUNT(SC.CID) FROM SC50 SC WHERE SC.SID = 01);
+
+
+SELECT *
+  FROM Student50
+ WHERE SID IN
+       (SELECT T6.S2ID
+          FROM (SELECT T5.S1ID, T5.S2ID, COUNT(S2CID) 同学课程总数2
+                  FROM (SELECT SC1.SID S1ID,
+                               SC1.CID S1CID,
+                               SC2.SID S2ID,
+                               SC2.CID S2CID
+                          FROM SC50 SC1
+                          JOIN SC50 SC2
+                            ON SC1.CID = SC2.CID
+                         WHERE SC1.SID = 1
+                           AND SC2.SID != 1) T5
+                 GROUP BY T5.S1ID, T5.S2ID --限定每一科目必定和同学1学的相同
+                HAVING COUNT(S2CID) = (SELECT COUNT(SC.CID)
+                                        FROM SC50 SC
+                                       WHERE SC.SID = 01)) T6);
+
+题目13：查询没有修过张三老师讲授的任何一门课程的学生姓名
+
+SELECT CID FROM Course50 WHERE TID = (SELECT TID FROM Teacher50 WHERE TNAME='张三')
+SELECT TID FROM Teacher50 WHERE TNAME='张三';
+
+SELECT DISTINCT ST.SNAME
+  FROM SC50 SC JOIN Student50 ST ON SC.SID=ST.SID
+ WHERE NOT EXISTS
+ (SELECT 1
+          FROM SC50 SC1
+         WHERE SC1.SID = SC.SID
+           AND SC1.CID IN
+               ((SELECT CID
+                  FROM Course50
+                 WHERE TID = (SELECT TID FROM Teacher50 WHERE TNAME = '张三'))));
+                 
+
+题目14：查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
+
+SELECT * FROM SC50
+找出所有不合格的学生的成绩 并且统计不合格的门数 选择出两门及以上不及格的sid
+
+SELECT ST.SID,
+       ST.SNAME,
+       T7.平均成绩
+        FROM Student50 ST JOIN (
+SELECT SID, COUNT(CID) COUNTCID, AVG(SCORE) 平均成绩 FROM SC50 WHERE SCORE < 60 GROUP BY SID HAVING COUNT(CID) >= 2) T7 ON ST.SID=T7.SID
+
+题目15：LeetCode-for-SQL的第二题：第二高的成绩
+
+SELECT T9.SID, T9.总成绩
+  FROM (SELECT SID, T8.总成绩, ROW_NUMBER() OVER(ORDER BY T8.总成绩 DESC) PM
+          FROM (SELECT SID, SUM(SCORE) 总成绩 FROM SC50 GROUP BY SID) T8) T9
+ WHERE T9.PM = 2
+
+题目16：求出第n高的成绩（找出语文科目第2高的成绩和学号）
+找出语文成绩第二高的成绩
+SELECT CID FROM Course50 WHERE CNAME='语文'
+
+SELECT TT1.SID, TT1.SCORE
+  FROM (SELECT TT.SID,
+               TT.SCORE,
+               DENSE_RANK() OVER(ORDER BY TT.SCORE DESC) PM
+          FROM (SELECT *
+                  FROM SC50
+                 WHERE CID = (SELECT CID FROM Course50 WHERE CNAME = '语文')) TT) TT1
+ WHERE TT1.PM = 2
+
+题目17：LeetCode-SQL-596-超过5名学生的课程
+各个课程有几个人上
+
+SELECT TT2.CID, CO.CNAME
+  FROM (SELECT CID, COUNT(CID) 课程数量 FROM SC50 GROUP BY CID) TT2
+  JOIN Course50 CO
+    ON TT2.CID = CO.CID
+ WHERE TT2.课程数量 > 5
+
+题目18：LeetCode-SQL-181-超过经理收入的员工
+找出经理的收入
+SELECT * FROM EMP WHERE JOB='MANAGER'
+找出经理对应的员工 且成绩比经理大的
+SELECT E.EMPNO, E.ENAME, E.JOB, E.MGR, E.HIREDATE, E.SAL, E.COMM, E.DEPTNO
+  FROM EMP E
+  JOIN (SELECT * FROM EMP WHERE JOB = 'MANAGER') M
+    ON E.MGR = M.EMPNO
+ WHERE E.SAL > M.SAL
+
+题目19：检索01课程分数小于60，按分数降序排列的学生信息
+
+SELECT ST.SID,
+       ST.SNAME,
+       ST.SAGE,
+       ST.SSEX,
+       TT3.SCORE FROM (
+SELECT SID,SCORE FROM SC50 WHERE CID=01 AND SCORE < 60 ORDER BY SCORE DESC) TT3 JOIN Student50 ST ON TT3.SID=ST.SID
+
+题目20：按平均成绩从高到低（降序）显示所有学生的所有课程的成绩以及平均成绩
+
+SELECT SID, SUM(SCORE) 所有课程的成绩, AVG(SCORE) 平均成绩 FROM SC50 GROUP BY SID ORDER BY AVG(SCORE) DESC
+
+题目21：查询各科成绩最高分、最低分和平均分：以如下形式显示：课程ID，课程name，最高分，最低分，平均分，及格率（及格：>=60），中等率（中等为：70-80），优良率（优良为：80-90），优秀率（优秀为：>=90）；
+SELECT CID,COUNT(CID) FROM SC50 GROUP BY CID
+
+SELECT CID, MAX(SCORE) 最高分, MIN(SCORE) 最低分, AVG(SCORE) 平均分 FROM SC50 GROUP BY CID ---平均分
+SELECT SC1.CID, COUNT(SC1.SCORE) FROM SC50 SC1 WHERE SC1.SCORE >=60 GROUP BY CID --及格率
+SELECT SC1.CID, COUNT(SC1.SCORE) FROM SC50 SC1 WHERE SC1.SCORE BETWEEN 70 AND 80 GROUP BY CID --中等率
+--------------------------------
+
+SELECT CO.CID, CO.CNAME, T.*
+  FROM Course50 CO
+  JOIN (SELECT SC.CID,
+               MAX(SC.SCORE) 最高分,
+               MIN(SC.SCORE) 最低分,
+               AVG(SC.SCORE) 平均分,
+               (SELECT COUNT(SC1.SCORE)
+                  FROM SC50 SC1
+                 WHERE SC.CID = SC1.CID
+                   AND SC1.SCORE >= 60
+                 GROUP BY SC1.CID) / COUNT(SC.CID) 及格率,
+               (SELECT COUNT(SC1.SCORE)
+                  FROM SC50 SC1
+                 WHERE SC.CID = SC1.CID
+                   AND SC1.SCORE BETWEEN 70 AND 80
+                 GROUP BY SC1.CID) / COUNT(SC.CID) 中等率,
+               (SELECT COUNT(SC1.SCORE)
+                  FROM SC50 SC1
+                 WHERE SC.CID = SC1.CID
+                   AND SC1.SCORE BETWEEN 80 AND 90
+                 GROUP BY SC1.CID) / COUNT(SC.CID) 优良率,
+               (SELECT COUNT(SC1.SCORE)
+                  FROM SC50 SC1
+                 WHERE SC.CID = SC1.CID
+                   AND SC1.SCORE >= 90
+                 GROUP BY SC1.CID) / COUNT(SC.CID) 优秀率
+          FROM SC50 SC
+         GROUP BY SC.CID) T
+    ON CO.CID = T.CID
+---------------------------------
+
+SELECT * FROM Course50 
+
+题目22：按照各科成绩进行排序，并且显示排名
+---各科总成绩排名
+SELECT CID, SUM(SCORE) 总成绩, ROW_NUMBER() OVER(ORDER BY SUM(SCORE)) 排名
+  FROM SC50
+ GROUP BY CID --ORDER BY SUM(SCORE)
+
+--各个同学各课成绩排名
+SELECT SID,
+       CID,
+       SCORE,
+       DENSE_RANK() OVER(PARTITION BY CID ORDER BY SCORE DESC) 成绩排名
+  FROM SC50
+
+题目23：查询学生的总成绩，并进行排名
+
+SELECT T.SID, T.SUMNUB, DENSE_RANK()OVER(ORDER BY T.SUMNUB DESC) 排名
+ FROM(
+SELECT SID, SUM(SCORE) SUMNUB FROM SC50 GROUP BY SID) T
+
+----------------------
+题目24：LeetCode-SQL-182-查找重复的电子邮箱，从给定的表Person中找出重复的电子邮箱
+题目25：LeetCode-SQL-595-大的国家
+题目26：LeetCode-SQL-184-部门工资最高/N高的员工—多看
+-----------------------------
+题目27：查询不同老师所教不同课程平均分从高到低显示
+SELECT SC50.CID, AVG(SC50.SCORE) 平均分
+  FROM SC50
+ GROUP BY SC50.CID --平均分
+           SELECT TE.TID, TE.TNAME, CO.CNAME, CO.CID
+             FROM Teacher50 TE
+             JOIN Course50 CO
+               ON TE.TID = CO.TID --科目与老师
+
+SELECT *
+  FROM (SELECT SC50.CID, AVG(SC50.SCORE) 平均分 FROM SC50 GROUP BY SC50.CID) T1
+  LEFT JOIN (SELECT TE.TID, TE.TNAME, CO.CNAME, CO.CID
+               FROM Teacher50 TE
+               JOIN Course50 CO
+                 ON TE.TID = CO.TID) T2
+    ON T1.CID = T2.CID
+ ORDER BY T1.平均分 DESC
+
+题目28：查询所有课程的成绩第2名到第3名的学生信息及该课程成绩
+
+SELECT ST.SID, ST.SNAME, ST.SAGE, ST.SSEX, T.SCORE, T.CID
+  FROM Student50 ST
+  JOIN (SELECT T.SID, T.CID, T.SCORE
+          FROM (SELECT SC50.SID,
+                       SC50.CID,
+                       SC50.SCORE,
+                       ROW_NUMBER() OVER(PARTITION BY SC50.CID ORDER BY SC50.SCORE DESC) 成绩排名
+                  FROM SC50) T
+         WHERE T.成绩排名 IN (2, 3)) T
+    ON ST.SID = T.SID
+
+
+题目29：统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[0-60]及所占百分比
+/*
+SELECT T.CID,
+       COUNT(T.八十五到一百) 八十五到一百,
+       COUNT(T.七十到八十五) 七十到八十五,
+       COUNT(T.六十到七十) 六十到七十,
+       COUNT(T.不及格) 不及格
+  FROM (SELECT CID,
+               SCORE,
+               CASE
+                 WHEN SCORE BETWEEN 85 AND 100 THEN
+                  1
+               END 八十五到一百,
+               CASE
+                 WHEN SCORE BETWEEN 70 AND 84 THEN
+                  1
+               END 七十到八十五,
+               CASE
+                 WHEN SCORE BETWEEN 60 AND 69 THEN
+                  1
+               END 六十到七十,
+               CASE
+                 WHEN SCORE BETWEEN 0 AND 59 THEN
+                  1
+               END 不及格
+          FROM SC50) T
+ GROUP BY T.CID
+*/
+SELECT CO.CNAME, T.*
+  FROM Course50 CO
+  JOIN (SELECT CID,
+               (SELECT COUNT(SC1.SCORE)
+                  FROM SC50 SC1
+                 WHERE SC.CID = SC1.CID
+                   AND SC1.SCORE BETWEEN 85 AND 100
+                 GROUP BY SC.CID) / COUNT(*) "[100-85]",
+               (SELECT COUNT(SC1.SCORE)
+                  FROM SC50 SC1
+                 WHERE SC.CID = SC1.CID
+                   AND SC1.SCORE BETWEEN 70 AND 84
+                 GROUP BY SC.CID) / COUNT(*) "[85-70]",
+               (SELECT COUNT(SC1.SCORE)
+                  FROM SC50 SC1
+                 WHERE SC.CID = SC1.CID
+                   AND SC1.SCORE BETWEEN 60 AND 69
+                 GROUP BY SC.CID) / COUNT(*) "[60-70]",
+               (SELECT COUNT(SC1.SCORE)
+                  FROM SC50 SC1
+                 WHERE SC.CID = SC1.CID
+                   AND SC1.SCORE BETWEEN 0 AND 59
+                 GROUP BY SC.CID) / COUNT(*) "[0-60]"
+          FROM SC50 SC
+         GROUP BY CID) T
+    ON CO.CID = T.CID
+    
+SELECT * FROM SC50  
+
+题目30：查询学生的平均成绩及名次—比较综合，多看，定义变量，实现rank函数
+
+SELECT T.SID, T.AVGSAL, RANK() OVER(ORDER BY AVGSAL DESC) 排名
+  FROM (SELECT SID, AVG(SCORE) AVGSAL FROM SC50 GROUP BY SID) T;
+
+题目31：查询各科成绩前三名的记录
+SELECT T.SID,T.CID,T.SCORE FROM (
+SELECT SID,CID,SCORE,RANK()OVER(PARTITION BY CID ORDER BY SCORE DESC) PM FROM SC50) T
+WHERE T.PM IN (1,2,3);
+
+题目32：查询每门课被选修的学生数
+SELECT * FROM Course50  
+----找出cid
+SELECT CID FROM Course50
+----总
+SELECT SC.CID ,COUNT(SC.CID ) FROM SC50 SC WHERE SC.CID IN(SELECT CID FROM Course50
+) GROUP BY SC.CID 
+
+
+题目33：查询出只有两门课程的全部学生的学号和姓名
+
+SELECT ST.SID,ST.SNAME FROM (
+SELECT SID,COUNT(CID) COUNCID FROM SC50 GROUP BY SID) T JOIN STUDENT50 ST ON T.SID=ST.SID WHERE T.COUNCID=2
+
+题目34：查询男女生人数
+
+SELECT SSEX,COUNT(SSEX)
+FROM STUDENT50 GROUP BY SSEX
+
+题目35：查询名字中含有风字的学生信息
+
+SELECT * FROM STUDENT50 WHERE SNAME LIKE '_风%';
+
+题目36：查询同名同性的学生名单，并统计同名人数
+SELECT ST.SID,
+       ST.SNAME,
+       ST.SAGE,
+       ST.SSEX,
+       T.COUNT1 同名数
+        FROM STUDENT50 ST JOIN (
+SELECT SNAME,COUNT(1) COUNT1 FROM STUDENT50 GROUP BY SNAME HAVING COUNT(1)>1) T ON ST.SNAME=T.SNAME;
+
+题目37：查询每门课程的平均成绩，结果按平均成绩降序排列；平均成绩相同时，按课程编号c_id升序排列
+
+SELECT CID,AVG(SCORE) FROM SC50 GROUP BY CID ORDER BY AVG(SCORE) DESC,CID;
+
+题目38：查询平均成绩大于等于85的所有学生的学号、姓名和平均成绩
+
+SELECT ST.SID,ST.SNAME,T.AVGSCORE FROM STUDENT50 ST JOIN (
+SELECT SID,AVG(SCORE) AVGSCORE FROM SC50 GROUP BY SID HAVING AVG(SCORE)>85) T ON ST.SID=T.SID;
+
+题目39：查询所有学生的课程及分数（均分、总分）情况
+
+SELECT SID,AVG(SCORE) AVGSO,SUM(SCORE) SUMSO FROM SC50 GROUP BY SID
+
+题目40：查询选修"张三"老师所授课程的学生中，成绩最高的学生信息及其成绩
+
+
+
+题目41：查询不同课程成绩相同的学生的学生编号、课程编号、学生成绩
+题目42：题目的要求就是找出每门课的前2名同学
+题目43：统计每门课程的学生选修人数（超过5人的课程才统计）。要求输出课程号和选修人数，查询结果按人数降序排列，若人数相同，按课程号升序排列
+题目44：检索至少选修两门课程的学生学号
+题目45：查询选修了全部课程的学生信息
+题目46：查询各学生的年龄：按照出生日期来算，当前月日 < 出生年月的月日则，年龄减1
+题目47：查询本周过生日的学生
+题目48：查询下周过生日的学生
+题目49：查询本月过生的同学
+题目50：查询下月过生的同学
+
+--获取当前日期 
+SELECT * FROM STUDENT50 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

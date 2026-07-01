@@ -1,0 +1,135 @@
+select * from score_1
+
+select * from score
+
+select *  from score_1 UNPIVOT(chengji for kemu in(语文 as 1, 数学 as 2, 英语 as 3)) t;
+
+select * from 人口 PIVOT(sum(rk) FOR sex IN(1 as nan, 2 as nv));
+
+
+
+---求最高成绩 聚合函数不做行列单独过滤 只能按组 如果需要查到对应最高分的科目则需要再连接课程成绩表
+select sid,max(sscore)
+from score
+group by sid
+
+--2.GREATEST 在一行之中获取最大值
+--所有参数数据类型保持一致,以第一个参数数据类型为准
+SELECT GREATEST(10,20,30) FROM DUAL;
+
+--求每个学生最高成绩
+SELECT NAME,GREATEST(语文,数学,英语) FROM SCORE_1;
+
+--求2015年哪个季度的营业额最高
+select Y, GREATEST(Q1, Q2, Q3, Q4) from TEST_TABLE PIVOT(sum(amt) FOR Q IN(1 AS Q1, 2 AS Q2, 3 AS Q3, 4 AS Q4))
+       
+--LEAST(参数...)在一行之中获取最小值
+SELECT LEAST(10,20,30,40,8) FROM DUAL;
+
+------开窗函数中
+sum+order by等于累加 SUM(SAL)OVER(ORDER BY EMPNO)
+
+
+
+
+
+--连续登录学习
+1.显示各部门员工的工资，并附带显示该部门的最高工资。
+SELECT DEPTNO, ENAME, SAL,
+MAX(SAL)OVER(PARTITION BY DEPTNO) ZUIGAO
+FROM EMP;
+
+
+--求各部门工资第二高的工资和部门编号(不允许使用开窗函数)
+方法一 不使用开窗函数
+SELECT DEPTNO, MAX(SAL) MAXSAL
+FROM EMP
+GROUP BY DEPTNO
+
+SELECT DEPTNO,SAL
+FROM EMP
+上面两个表求差集 用完整的表减去只有最高工资的表 minus
+SELECT T.DEPTNO,MAX(T.SAL)
+FROM (
+     SELECT DEPTNO,SAL FROM EMP
+     MINUS
+     SELECT DEPTNO, MAX(SAL) MAXSAL FROM EMP GROUP BY DEPTNO
+) T
+GROUP BY T.DEPTNO
+
+方法二 使用开窗函数--求各部门工资第二高的工资和部门编号
+SELECT T.DEPTNO, T.SAL
+FROM (
+SELECT DEPTNO, SAL,
+ROW_NUMBER()OVER(PARTITION BY DEPTNO ORDER BY SAL DESC) PM
+FROM EMP) T
+WHERE T.PM = 2
+
+--找出连续两年有员工入职的部门编号
+
+SELECT T.DEPTNO
+FROM (
+SELECT deptno,ENAME, hiredate, ROW_NUMBER()OVER(PARTITION BY DEPTNO ORDER BY HIREDATE) RQ
+,(TO_CHAR(HIREDATE,'YYYY') - ROW_NUMBER()OVER(PARTITION BY DEPTNO ORDER BY HIREDATE)) TJ
+FROM EMP ) T
+GROUP BY DEPTNO,T.TJ
+HAVING COUNT(T.TJ) >1
+
+
+2.按照deptno分组，然后计算每组工资的总和
+
+
+
+
+3.对各部门进行分组，并附带显示第一行至当前行的工资汇总，根据员工编号累加
+当前行至最后一行的汇总
+
+SELECT EMPNO,DEPTNO, SAL
+,SUM(SAL)OVER(ORDER BY EMPNO ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) S1
+,SUM(SAL)OVER(ORDER BY EMPNO ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) S2
+FROM EMP
+
+
+当前行的上一行(rownum-1)到当前行的汇总
+
+SELECT EMPNO,DEPTNO, SAL
+,SUM(SAL)OVER(ORDER BY EMPNO ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) S1
+,SUM(SAL)OVER(ORDER BY EMPNO ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) S2
+FROM EMP
+
+
+当前行的上一行(rownum-1)到当前行的下两行(rownum+2)的汇总
+
+SELECT EMPNO,DEPTNO, SAL
+,SUM(SAL)OVER(ORDER BY EMPNO ROWS BETWEEN 1 PRECEDING AND 2 FOLLOWING) S1
+,SUM(SAL)OVER(ORDER BY EMPNO ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) S2
+FROM EMP
+
+
+
+
+
+
+
+
+
+
+
+create table logintest(user_id number,log_date date);
+insert into logintest values(111,to_date('2021-06-01','yyyy-mm-dd'));
+insert into logintest values(111,to_date('2021-06-02','yyyy-mm-dd'));
+insert into logintest values(111,to_date('2021-06-03','yyyy-mm-dd'));
+insert into logintest values(111,to_date('2021-06-05','yyyy-mm-dd'));
+insert into logintest values(111,to_date('2021-06-08','yyyy-mm-dd'));
+insert into logintest values(222,to_date('2021-06-01','yyyy-mm-dd'));
+insert into logintest values(222,to_date('2021-06-03','yyyy-mm-dd'));
+insert into logintest values(222,to_date('2021-06-04','yyyy-mm-dd'));
+insert into logintest values(222,to_date('2021-06-06','yyyy-mm-dd'));
+insert into logintest values(222,to_date('2021-06-07','yyyy-mm-dd'));
+insert into logintest values(333,to_date('2021-06-01','yyyy-mm-dd'));
+insert into logintest values(333,to_date('2021-06-02','yyyy-mm-dd'));
+insert into logintest values(333,to_date('2021-06-04','yyyy-mm-dd'));
+insert into logintest values(333,to_date('2021-06-06','yyyy-mm-dd'));
+insert into logintest values(333,to_date('2021-06-07','yyyy-mm-dd'));
+commit;
+select * from logintest

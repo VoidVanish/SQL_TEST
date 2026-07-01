@@ -1,0 +1,140 @@
+
+      小练习：
+        对于EMP_1010表中SALESMAN和MANAGER，
+        如果这个员工工资小于1000，就给他加300奖金
+        如果这个员工工资1000到2000，就给他加200奖金
+        如果这个员工工资大于2000，就给他加100奖金
+        输出员工编号，员工名字，员工工资，员工奖金
+        
+        
+        
+DECLARE
+CURSOR C_A IS SELECT * FROM EMP WHERE JOB IN ('SALESMAN','MANAGER');
+V_A EMP%ROWTYPE;
+
+BEGIN
+  
+OPEN C_A;
+     FETCH C_A INTO V_A;
+WHILE C_A%FOUND LOOP
+    IF V_A.SAL <1000
+       THEN V_A.COMM:=NVL(V_A.COMM,0)+300;
+      -- DBMS_OUTPUT.put_line(V_A.EMPNO||'  '||V_A.ENAME||'  '||V_A.SAL||'  '||V_A.COMM||'  '||V_A.JOB);
+       ELSIF V_A.SAL <=2000
+         THEN V_A.COMM:=NVL(V_A.COMM,0)+200;
+        -- DBMS_OUTPUT.put_line(V_A.EMPNO||'  '||V_A.ENAME||'  '||V_A.SAL||'  '||V_A.COMM||'  '||V_A.JOB);
+         ELSE
+           V_A.COMM:=NVL(V_A.COMM,0)+100;
+          -- DBMS_OUTPUT.put_line(V_A.EMPNO||'  '||V_A.ENAME||'  '||V_A.SAL||'  '||V_A.COMM||'  '||V_A.JOB);
+         END IF;
+         DBMS_OUTPUT.put_line(V_A.EMPNO||'  '||V_A.ENAME||'  '||V_A.SAL||'  '||V_A.COMM||'  '||V_A.JOB);
+    FETCH C_A INTO V_A;
+END LOOP;
+CLOSE C_A;
+END;
+
+
+
+
+
+DECLARE
+  CURSOR C_A(P_BM NUMBER) IS
+    SELECT * FROM EMP WHERE DEPTNO = P_BM;
+BEGIN
+  --FOR I IN 游标名 LOOP
+  FOR I IN C_A(20) LOOP
+    DBMS_OUTPUT.put_line(I.ENAME || I.SAL || I.JOB);
+  END LOOP;
+END;
+
+--FOR循环支持使用子查询代替游标
+BEGIN
+  FOR I IN (SELECT * FROM EMP) LOOP
+    DBMS_OUTPUT.put_line(I.ENAME || I.SAL || I.JOB);
+  END LOOP;
+END;
+        
+小练习：
+用游标FOR循环操作EMP1表
+如果这个员工的岗位是ANALYST或者CLERK或者SALESMAN，就给该员工加500元奖金
+如果这个员工的岗位是MANAGER，就给该员工加800块奖金
+如果这个员工的岗位是PRESIDENT，不做处理        
+
+DECLARE
+CURSOR C_A IS SELECT * FROM EMP1;
+
+BEGIN
+  FOR I IN C_A LOOP
+  IF I.JOB IN ('ANALYST','CLERK','SALESMAN')
+    THEN I.COMM:=NVL(I.COMM,0)+500;
+    DBMS_OUTPUT.put_line(I.ENAME||'  '||I.JOB||'  '||I.COMM);
+    ELSIF I.JOB IN ('MANAGER')
+      THEN I.COMM:=NVL(I.COMM,0)+800;
+      DBMS_OUTPUT.put_line(I.ENAME||'  '||I.JOB||'  '||I.COMM);
+      ELSE I.COMM:=I.COMM;
+        DBMS_OUTPUT.put_line(I.ENAME||'  '||I.JOB||'  '||I.COMM);
+      END IF;
+  END LOOP;
+END; 
+
+题目：
+--创建一个表格：使用循环，往表格里面添加1--200的所有的数字  
+DROP TABLE TT;
+CREATE TABLE TT(T_ID NUMBER(20));SELECT * FROM TT;
+
+BEGIN
+  FOR I IN 1 .. 200 LOOP
+    INSERT INTO TT (TT.T_ID) VALUES (I);
+    DBMS_OUTPUT.put_line(TT.T_ID);
+END LOOP;
+END;
+  
+做如下题目：
+-- 查询刚才这个test10表，找出这个表格中两两相加等于288的数字，
+--将它们的组合都打印出来     88 200  200 88
+
+DECLARE
+--CURSOR C_A IS SELECT * FROM TT;
+V_COUNT NUMBER;
+BEGIN
+  FOR I IN (SELECT * FROM TT) LOOP
+    FOR B IN (SELECT * FROM TT) LOOP
+         IF I.T_ID + B.T_ID = 288 AND I.T_ID<B.T_ID
+            THEN DBMS_OUTPUT.put_line(I.T_ID||'+'||B.T_ID||'='||'288');
+           END IF;
+         END LOOP;
+END LOOP;
+END;
+
+
+
+
+CREATE TABLE DTSQL( V_CHAR VARCHAR2(100));
+
+INSERT INTO DTSQL (V_CHAR) VALUES ('INSERT INTO EMP1(EMPNO,ENAME)VALUES(1,''ABC'')');
+INSERT INTO DTSQL (V_CHAR) VALUES ('INSERT INTO EMP1(EMPNO,ENAME)VALUES(1,''ABC'')');
+INSERT INTO DTSQL (V_CHAR) VALUES ('INSERT INTO EMP1(EMPNO,ENAME)VALUES(1,''ABC'')');
+INSERT INTO DTSQL (V_CHAR) VALUES ('INSERT INTO EMP1(EMPNO,ENAME)VALUES(1,''ABC'')');
+
+INSERT INTO EMP1(EMPNO,ENAME)VALUES(1,'ABC')
+INSERT INTO EMP1(EMPNO,ENAME)VALUES(1,'ABC')
+INSERT INTO EMP1(EMPNO,ENAME)VALUES(1,'ABC')
+INSERT INTO EMP1(EMPNO,ENAME)VALUES(1,'ABC')
+
+
+DECLARE
+CURSOR C_A IS SELECT * FROM DTSQL;
+BEGIN  
+FOR I IN C_A LOOP
+    EXECUTE IMMEDIATE I.V_CHAR;
+END LOOP;
+END;
+SELECT * FROM EMP1;
+
+
+
+
+
+
+
+
