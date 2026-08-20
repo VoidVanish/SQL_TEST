@@ -1,0 +1,18 @@
+Thank you for giving me this opportunity to have this interview.
+My name is Mao Zhiming, and I also go by Jack. 
+I graduated from Huali College of Guangdong University of Technology.
+I have about three years of experience in big data development. 
+My main focus is big data development, ETL processes, data processing. 
+I am familiar with big data technologies, including Hive, DataX, MaxCompute, 
+DolphinScheduler, HDFS, and SQL development.
+In my previous job, I participated in a property insurance big data project. 
+The project focused on building a data platform for sales staff performance 
+management and business analysis. I was responsible for data integration, 
+data cleaning, ETL development, and data quality checking.
+During the project, I participated in the whole data processing
+process from the ODS layer to the ADS layer. 
+I used DataX to synchronize data from business databases into the big data platform, 
+used Hive SQL for data cleaning and transformation, and developed data processing 
+tasks based on business requirements.
+Besides technical development, I also participated in requirement communication 
+with business teams, analyzed business logic, and ensured data accuracy and consistency.
